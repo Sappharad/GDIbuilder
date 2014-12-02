@@ -184,6 +184,7 @@
             this.Controls.Add(this.txtVolume);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Name = "AdvancedDialog";
             this.Text = "Advanced";
             this.ResumeLayout(false);
