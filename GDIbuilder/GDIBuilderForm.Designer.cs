@@ -92,11 +92,11 @@
             // lblIpBin
             // 
             this.lblIpBin.AutoSize = true;
-            this.lblIpBin.Location = new System.Drawing.Point(28, 43);
+            this.lblIpBin.Location = new System.Drawing.Point(25, 43);
             this.lblIpBin.Name = "lblIpBin";
-            this.lblIpBin.Size = new System.Drawing.Size(38, 13);
+            this.lblIpBin.Size = new System.Drawing.Size(41, 13);
             this.lblIpBin.TabIndex = 4;
-            this.lblIpBin.Text = "IP.BIN";
+            this.lblIpBin.Text = "IP.BIN:";
             // 
             // btnSelectIP
             // 
