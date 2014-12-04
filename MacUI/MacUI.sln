@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDIBuilder", "GDIBuilder.csproj", "{D92E5B86-3E27-463E-B8AB-549A315A8AB7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscUtils", "..\GDIbuilder\DiscUtils\DiscUtils.csproj", "{DBB340F9-2386-43C2-A473-FA496CBE07A4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		AppStore|Any CPU = AppStore|Any CPU
+		SignedRelease|Any CPU = SignedRelease|Any CPU
+		Release %28StyleCop%29|Any CPU = Release %28StyleCop%29|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.AppStore|Any CPU.ActiveCfg = AppStore|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.AppStore|Any CPU.Build.0 = AppStore|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.Release %28StyleCop%29|Any CPU.ActiveCfg = Debug|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.Release %28StyleCop%29|Any CPU.Build.0 = Debug|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.SignedRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{D92E5B86-3E27-463E-B8AB-549A315A8AB7}.SignedRelease|Any CPU.Build.0 = Debug|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.AppStore|Any CPU.ActiveCfg = Release|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.AppStore|Any CPU.Build.0 = Release|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.Release %28StyleCop%29|Any CPU.ActiveCfg = Release %28StyleCop%29|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.Release %28StyleCop%29|Any CPU.Build.0 = Release %28StyleCop%29|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.SignedRelease|Any CPU.ActiveCfg = SignedRelease|Any CPU
+		{DBB340F9-2386-43C2-A473-FA496CBE07A4}.SignedRelease|Any CPU.Build.0 = SignedRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = GDIBuilder.csproj
+		version = 1.0
+	EndGlobalSection
+EndGlobal
