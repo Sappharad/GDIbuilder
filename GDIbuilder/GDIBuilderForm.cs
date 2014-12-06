@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using DiscUtils.Iso9660;
+using DiscUtils.Gdrom;
 using System.Threading;
 
 namespace GDIbuilder

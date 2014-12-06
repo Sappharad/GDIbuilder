@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using DiscUtils;
 
-namespace GDIbuilder
+namespace DiscUtils.Gdrom
 {
     public class GDromBuilder
     {
@@ -23,6 +23,8 @@ namespace GDIbuilder
         private int _lastProgress;
         public delegate void OnReportProgress(int percent);
         public OnReportProgress ReportProgress { get; set; }
+        public string Track03Path { get; set; }
+        public string LastTrackPath { get; set; }
 
         public GDromBuilder()
         {
@@ -34,7 +36,7 @@ namespace GDIbuilder
             ApplicationIdentifier = string.Empty;
         }
 
-        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda, string output)
+        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda)
         {
             string bootBin;
             byte[] ipbinData = new byte[0x8000];
@@ -66,36 +68,43 @@ namespace GDIbuilder
             }
             DirectoryInfo di = new DirectoryInfo(data);
             PopulateFromFolder(builder, di, di.FullName, bootBin);
-            
+
             using (BuiltStream isoStream = (BuiltStream)builder.Build())
             {
                 _lastProgress = 0;
                 if (retval.Count > 0)
                 {
-                    ExportMultiTrack(isoStream, output, ipbinData, retval);
+                    ExportMultiTrack(isoStream, ipbinData, retval);
                 }
                 else
                 {
-                    ExportSingleTrack(isoStream, output, ipbinData, retval);
-                }                
+                    ExportSingleTrack(isoStream, ipbinData, retval);
+                }
             }
             return retval;
         }
 
-        private void ExportSingleTrack(BuiltStream isoStream, string output, byte[] ipbinData, List<DiscTrack> tracks)
+        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda, string outDir)
+        {
+            Track03Path = Path.Combine(outDir, "track03.bin");
+            LastTrackPath = Path.Combine(outDir, GetLastTrackName(cdda != null ? cdda.Count : 0));
+            return BuildGDROM(data, ipbin, cdda, outDir);
+        }
+
+        private void ExportSingleTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
         {
             long currentBytes = 0;
             long totalBytes = isoStream.Length;
             int skip = 0;
 
             DiscTrack track3 = new DiscTrack();
-            track3.FileName = "track03.bin";
+            track3.FileName = Path.GetFileName(Track03Path);
             track3.LBA = GD_START_LBA;
             track3.Type = 4;
             track3.FileSize = (GD_END_LBA - GD_START_LBA) * DATA_SECTOR_SIZE;
             tracks.Add(track3);
             UpdateIPBIN(ipbinData, tracks);
-            using (FileStream destStream = new FileStream(Path.Combine(output, "track03.bin"), FileMode.Create, FileAccess.Write))
+            using (FileStream destStream = new FileStream(Track03Path, FileMode.Create, FileAccess.Write))
             {
                 destStream.Write(ipbinData, 0, ipbinData.Length);
                 isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
@@ -125,7 +134,7 @@ namespace GDIbuilder
         }
 
 
-        private void ExportMultiTrack(BuiltStream isoStream, string output, byte[] ipbinData, List<DiscTrack> tracks)
+        private void ExportMultiTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
         {
             //There is a 150 sector gap before and after the CDDA
             long lastHeaderEnd = 0;
@@ -157,7 +166,7 @@ namespace GDIbuilder
                 throw new Exception("Not enough room to fit all of the CDDA after we added the data.");
             }
             DiscTrack track3 = new DiscTrack();
-            track3.FileName = "track03.bin";
+            track3.FileName = Path.GetFileName(Track03Path);
             track3.LBA = GD_START_LBA;
             track3.Type = 4;
             track3.FileSize = trackEnd * DATA_SECTOR_SIZE;
@@ -174,7 +183,7 @@ namespace GDIbuilder
             long totalBytes = isoStream.Length;
             int skip = 0;
 
-            using (FileStream destStream = new FileStream(Path.Combine(output, track3.FileName), FileMode.Create, FileAccess.Write))
+            using (FileStream destStream = new FileStream(Track03Path, FileMode.Create, FileAccess.Write))
             {
                 destStream.Write(ipbinData, 0, ipbinData.Length);
                 isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
@@ -205,7 +214,7 @@ namespace GDIbuilder
                     }
                 }
             }
-            using (FileStream destStream = new FileStream(Path.Combine(output, lastTrack.FileName), FileMode.Create, FileAccess.Write))
+            using (FileStream destStream = new FileStream(LastTrackPath, FileMode.Create, FileAccess.Write))
             {
                 byte[] buffer = new byte[64 * 1024];
                 currentBytes = firstFileStart * DATA_SECTOR_SIZE;
@@ -304,6 +313,34 @@ namespace GDIbuilder
                 tn++;
             }
             return sb.ToString();
+        }
+
+        public void UpdateGdiFile(List<DiscTrack> tracks, string gdiPath)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (File.Exists(gdiPath))
+            {
+                string[] file = File.ReadAllLines(gdiPath);
+                int i = 0;
+                if (file.Length > 0 && file[0].Length <= 3)
+                {
+                    sb.AppendLine(file[0]);
+                    i++;
+                }
+                for (; i < file.Length; i++)
+                {
+                    if (file[i].StartsWith("3"))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        sb.AppendLine(file[i]);
+                    }
+                }
+            }
+            sb.Append(GetGDIText(tracks));
+            File.WriteAllText(gdiPath, sb.ToString());
         }
 
         private string GetLastTrackName(int cddaTracks)

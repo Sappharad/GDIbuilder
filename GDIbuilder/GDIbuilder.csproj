@@ -73,7 +73,6 @@
     <Compile Include="GDIBuilderForm.Designer.cs">
       <DependentUpon>GDIBuilderForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="GDromBuilder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResultDialog.cs">

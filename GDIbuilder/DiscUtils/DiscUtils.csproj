@@ -108,6 +108,7 @@
     <Compile Include="Crc32LittleEndian.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GDROM\GDromBuilder.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Iso9660\RockRidge\ChildLinkSystemUseEntry.cs" />
     <Compile Include="ClusterMap.cs" />
