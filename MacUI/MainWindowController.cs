@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using MonoMac.Foundation;
 using MonoMac.AppKit;
-using GDIbuilder;
 using System.Threading;
+using DiscUtils.Gdrom;
 
 namespace MacUI
 {
