@@ -171,7 +171,7 @@ namespace buildgdi
         private static void PrintUsage()
         {
             Console.WriteLine("BuildGDI - Command line GDIBuilder");
-            Console.WriteLine("Usage: buildgdi -data dataFolder -ip IP.BIN -cdda track04.raw, track05.raw -output folder -gdi disc.gdi");
+            Console.WriteLine("Usage: buildgdi -data dataFolder -ip IP.BIN -cdda track04.raw track05.raw -output folder -gdi disc.gdi");
             Console.WriteLine();
             Console.WriteLine("Arguments:");
             Console.WriteLine("-data <folder> (Required) = Location of the files for the disc");
