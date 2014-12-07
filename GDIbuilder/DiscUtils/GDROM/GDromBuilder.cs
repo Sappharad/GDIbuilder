@@ -5,6 +5,7 @@ using DiscUtils.Iso9660;
 using System.Collections.Generic;
 using System.IO;
 using DiscUtils;
+using DiscUtils.Raw;
 
 namespace DiscUtils.Gdrom
 {
@@ -25,6 +26,7 @@ namespace DiscUtils.Gdrom
         public OnReportProgress ReportProgress { get; set; }
         public string Track03Path { get; set; }
         public string LastTrackPath { get; set; }
+        public bool RawMode { get; set; }
 
         public GDromBuilder()
         {
@@ -74,11 +76,25 @@ namespace DiscUtils.Gdrom
                 _lastProgress = 0;
                 if (retval.Count > 0)
                 {
-                    ExportMultiTrack(isoStream, ipbinData, retval);
+                    if (RawMode)
+                    {
+                        ExportMultiTrackRaw(isoStream, ipbinData, retval);
+                    }
+                    else
+                    {
+                        ExportMultiTrack(isoStream, ipbinData, retval);
+                    }
                 }
                 else
                 {
-                    ExportSingleTrack(isoStream, ipbinData, retval);
+                    if (RawMode)
+                    {
+                        ExportSingleTrackRaw(isoStream, ipbinData, retval);
+                    }
+                    else
+                    {
+                        ExportSingleTrack(isoStream, ipbinData, retval);
+                    }
                 }
             }
             return retval;
@@ -88,7 +104,7 @@ namespace DiscUtils.Gdrom
         {
             Track03Path = Path.Combine(outDir, "track03.bin");
             LastTrackPath = Path.Combine(outDir, GetLastTrackName(cdda != null ? cdda.Count : 0));
-            return BuildGDROM(data, ipbin, cdda, outDir);
+            return BuildGDROM(data, ipbin, cdda);
         }
 
         private void ExportSingleTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
@@ -108,6 +124,7 @@ namespace DiscUtils.Gdrom
             {
                 destStream.Write(ipbinData, 0, ipbinData.Length);
                 isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
+                currentBytes += ipbinData.Length;
 
                 byte[] buffer = new byte[64 * 1024];
                 int numRead = isoStream.Read(buffer, 0, buffer.Length);
@@ -133,7 +150,75 @@ namespace DiscUtils.Gdrom
             }
         }
 
+        /// <summary>
+        /// Separate raw logic to maintain performance of the 2048 version
+        /// </summary>
+        private void ExportSingleTrackRaw(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
+        {
+            long currentBytes = 0;
+            long totalBytes = isoStream.Length;
+            int skip = 0;
 
+            DiscTrack track3 = new DiscTrack();
+            track3.FileName = Path.GetFileName(Track03Path);
+            track3.LBA = GD_START_LBA;
+            track3.Type = 4;
+            track3.FileSize = (GD_END_LBA - GD_START_LBA) * DATA_SECTOR_SIZE;
+            tracks.Add(track3);
+            UpdateIPBIN(ipbinData, tracks);
+            using (FileStream destStream = new FileStream(Track03Path, FileMode.Create, FileAccess.Write))
+            {
+                int currentLBA = GD_START_LBA;
+                byte[] buffer = new byte[DATA_SECTOR_SIZE];
+                byte[] resultSector;
+                for (int i = 0; i < ipbinData.Length; i += buffer.Length)
+                {
+                    Array.Copy(ipbinData, i, buffer, 0, buffer.Length);
+                    resultSector = SectorConversion.ConvertSectorToRawMode1(buffer, currentLBA++);
+                    destStream.Write(resultSector, 0, resultSector.Length);
+                    currentBytes += 2048;
+                }
+                isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
+
+                int numRead = isoStream.Read(buffer, 0, buffer.Length);
+                while (numRead != 0)
+                {
+                    while (numRead != 0 && numRead < buffer.Length)
+                    {
+                        //We need all 2048 bytes for a complete sector!
+                        int localRead = isoStream.Read(buffer, numRead, buffer.Length - numRead);
+                        numRead += localRead;
+                        if (localRead == 0)
+                        {
+                            for (int i = numRead; i < buffer.Length; i++)
+                            {
+                                buffer[i] = 0;
+                            }
+                            break; //Prevent infinite loop
+                        }
+                    }
+                    resultSector = SectorConversion.ConvertSectorToRawMode1(buffer, currentLBA++);
+                    destStream.Write(resultSector, 0, resultSector.Length);
+                    numRead = isoStream.Read(buffer, 0, buffer.Length);
+                    currentBytes += numRead;
+                    skip++;
+                    if (skip >= 10)
+                    {
+                        skip = 0;
+                        int percent = (int)((currentBytes * 100) / totalBytes);
+                        if (percent > _lastProgress)
+                        {
+                            _lastProgress = percent;
+                            if (ReportProgress != null)
+                            {
+                                ReportProgress(_lastProgress);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         private void ExportMultiTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
         {
             //There is a 150 sector gap before and after the CDDA
@@ -244,6 +329,155 @@ namespace DiscUtils.Gdrom
             }
         }
 
+        private void ExportMultiTrackRaw(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
+        {
+            //There is a 150 sector gap before and after the CDDA
+            long lastHeaderEnd = 0;
+            long firstFileStart = 0;
+            foreach (BuilderExtent extent in isoStream.BuilderExtents)
+            {
+                if (extent is FileExtent)
+                {
+                    firstFileStart = extent.Start;
+                    break;
+                }
+                else
+                {
+                    lastHeaderEnd = extent.Start + RoundUp(extent.Length, DATA_SECTOR_SIZE);
+                }
+            }
+            lastHeaderEnd = lastHeaderEnd / DATA_SECTOR_SIZE;
+            firstFileStart = firstFileStart / DATA_SECTOR_SIZE;
+            int trackEnd = (int)(firstFileStart - 150);
+            for (int i = tracks.Count - 1; i >= 0; i--)
+            {
+                trackEnd = trackEnd - (int)(RoundUp(tracks[i].FileSize, RAW_SECTOR_SIZE) / RAW_SECTOR_SIZE);
+                //Track end is now the beginning of this track and the end of the previous
+                tracks[i].LBA = (uint)(trackEnd + GD_START_LBA);
+            }
+            trackEnd = trackEnd - 150;
+            if (trackEnd < lastHeaderEnd)
+            {
+                throw new Exception("Not enough room to fit all of the CDDA after we added the data.");
+            }
+            DiscTrack track3 = new DiscTrack();
+            track3.FileName = Path.GetFileName(Track03Path);
+            track3.LBA = GD_START_LBA;
+            track3.Type = 4;
+            track3.FileSize = trackEnd * DATA_SECTOR_SIZE;
+            tracks.Insert(0, track3);
+            DiscTrack lastTrack = new DiscTrack();
+            lastTrack.FileName = GetLastTrackName(tracks.Count - 1);
+            lastTrack.FileSize = (GD_END_LBA - GD_START_LBA - firstFileStart) * DATA_SECTOR_SIZE;
+            lastTrack.LBA = (uint)(GD_START_LBA + firstFileStart);
+            lastTrack.Type = 4;
+            tracks.Add(lastTrack);
+            UpdateIPBIN(ipbinData, tracks);
+
+            long currentBytes = 0;
+            long totalBytes = isoStream.Length;
+            int skip = 0;
+            int currentLBA = GD_START_LBA;
+
+            using (FileStream destStream = new FileStream(Track03Path, FileMode.Create, FileAccess.Write))
+            {
+                byte[] buffer = new byte[DATA_SECTOR_SIZE];
+                byte[] resultSector;
+                for (int i = 0; i < ipbinData.Length; i += buffer.Length)
+                {
+                    Array.Copy(ipbinData, i, buffer, 0, buffer.Length);
+                    resultSector = SectorConversion.ConvertSectorToRawMode1(buffer, currentLBA++);
+                    destStream.Write(resultSector, 0, resultSector.Length);
+                    currentBytes += 2048;
+                }
+                isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
+                long bytesWritten = (long)ipbinData.Length;
+
+                int numRead = isoStream.Read(buffer, 0, buffer.Length);
+                while (numRead != 0 && bytesWritten < track3.FileSize)
+                {
+                    while (numRead != 0 && numRead < buffer.Length)
+                    {
+                        //We need all 2048 bytes for a complete sector!
+                        int localRead = isoStream.Read(buffer, numRead, buffer.Length - numRead);
+                        numRead += localRead;
+                        if (localRead == 0)
+                        {
+                            for (int i = numRead; i < buffer.Length; i++)
+                            {
+                                buffer[i] = 0;
+                            }
+                            break; //Prevent infinite loop
+                        }
+                    }
+                    resultSector = SectorConversion.ConvertSectorToRawMode1(buffer, currentLBA++);
+                    destStream.Write(resultSector, 0, resultSector.Length);
+                    numRead = isoStream.Read(buffer, 0, buffer.Length);
+                    bytesWritten += numRead;
+                    currentBytes += numRead;
+                    skip++;
+                    if (skip >= 50)
+                    {
+                        skip = 0;
+                        int percent = (int)((currentBytes * 100) / totalBytes);
+                        if (percent > _lastProgress)
+                        {
+                            _lastProgress = percent;
+                            if (ReportProgress != null)
+                            {
+                                ReportProgress(_lastProgress);
+                            }
+                        }
+                    }
+                }
+            }
+            currentLBA = (int)lastTrack.LBA;
+            using (FileStream destStream = new FileStream(LastTrackPath, FileMode.Create, FileAccess.Write))
+            {
+                byte[] buffer = new byte[DATA_SECTOR_SIZE];
+                byte[] resultSector;
+                currentBytes = firstFileStart * DATA_SECTOR_SIZE;
+                isoStream.Seek(currentBytes, SeekOrigin.Begin);
+                int numRead = isoStream.Read(buffer, 0, buffer.Length);
+                while (numRead != 0)
+                {
+                    while (numRead != 0 && numRead < buffer.Length)
+                    {
+                        //We need all 2048 bytes for a complete sector!
+                        int localRead = isoStream.Read(buffer, numRead, buffer.Length - numRead);
+                        numRead += localRead;
+                        if (localRead == 0)
+                        {
+                            for (int i = numRead; i < buffer.Length; i++)
+                            {
+                                buffer[i] = 0;
+                            }
+                            break; //Prevent infinite loop
+                        }
+                    }
+                    resultSector = SectorConversion.ConvertSectorToRawMode1(buffer, currentLBA++);
+                    destStream.Write(resultSector, 0, resultSector.Length);
+                    numRead = isoStream.Read(buffer, 0, buffer.Length);
+
+                    currentBytes += numRead;
+                    skip++;
+                    if (skip >= 10)
+                    {
+                        skip = 0;
+                        int percent = (int)((currentBytes * 100) / totalBytes);
+                        if (percent > _lastProgress)
+                        {
+                            _lastProgress = percent;
+                            if (ReportProgress != null)
+                            {
+                                ReportProgress(_lastProgress);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         private void UpdateIPBIN(byte[] ipbinData, List<DiscTrack> tracks)
         {
             //Tracks 03 to 99, 1 and 2 were in the low density area
@@ -301,7 +535,7 @@ namespace DiscUtils.Gdrom
             foreach (DiscTrack track in tracks)
             {
                 sb.Append(tn + " " + track.LBA + " " + track.Type + " ");
-                if (track.Type == 0)
+                if (track.Type == 0 || RawMode)
                 {
                     sb.Append("2352 ");
                 }

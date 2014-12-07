@@ -47,6 +47,7 @@
             this.btnMoveCddaUp = new System.Windows.Forms.Button();
             this.btnMoveCddaDown = new System.Windows.Forms.Button();
             this.btnAdvanced = new System.Windows.Forms.Button();
+            this.chkRawMode = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // txtData
@@ -230,11 +231,22 @@
             this.btnAdvanced.UseVisualStyleBackColor = true;
             this.btnAdvanced.Click += new System.EventHandler(this.btnAdvanced_Click);
             // 
+            // chkRawMode
+            // 
+            this.chkRawMode.AutoSize = true;
+            this.chkRawMode.Location = new System.Drawing.Point(213, 199);
+            this.chkRawMode.Name = "chkRawMode";
+            this.chkRawMode.Size = new System.Drawing.Size(177, 17);
+            this.chkRawMode.TabIndex = 20;
+            this.chkRawMode.Text = "Output raw sectors (2352 mode)";
+            this.chkRawMode.UseVisualStyleBackColor = true;
+            // 
             // GDIBuilderForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(453, 266);
+            this.Controls.Add(this.chkRawMode);
             this.Controls.Add(this.btnAdvanced);
             this.Controls.Add(this.btnMoveCddaDown);
             this.Controls.Add(this.btnMoveCddaUp);
@@ -281,6 +293,7 @@
         private System.Windows.Forms.Button btnMoveCddaUp;
         private System.Windows.Forms.Button btnMoveCddaDown;
         private System.Windows.Forms.Button btnAdvanced;
+        private System.Windows.Forms.CheckBox chkRawMode;
     }
 }
 

@@ -31,6 +31,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtResult = new System.Windows.Forms.TextBox();
             this.btnOK = new System.Windows.Forms.Button();
+            this.label2 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -51,27 +52,37 @@
             this.txtResult.Multiline = true;
             this.txtResult.Name = "txtResult";
             this.txtResult.ReadOnly = true;
-            this.txtResult.Size = new System.Drawing.Size(400, 111);
+            this.txtResult.Size = new System.Drawing.Size(400, 115);
             this.txtResult.TabIndex = 1;
             // 
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnOK.Location = new System.Drawing.Point(341, 146);
+            this.btnOK.Location = new System.Drawing.Point(341, 163);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(75, 23);
             this.btnOK.TabIndex = 2;
             this.btnOK.Text = "OK";
             this.btnOK.UseVisualStyleBackColor = true;
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(13, 147);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(360, 13);
+            this.label2.TabIndex = 3;
+            this.label2.Text = "If disc.gdi exists in the output folder, this was updated for you automatically.";
+            // 
             // ResultDialog
             // 
             this.AcceptButton = this.btnOK;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(428, 181);
+            this.ClientSize = new System.Drawing.Size(428, 198);
             this.ControlBox = false;
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.txtResult);
             this.Controls.Add(this.label1);
@@ -87,5 +98,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtResult;
         private System.Windows.Forms.Button btnOK;
+        private System.Windows.Forms.Label label2;
     }
 }

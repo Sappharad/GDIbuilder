@@ -220,9 +220,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PumpProgressEventArgs.cs" />
     <Compile Include="Range.cs" />
+    <Compile Include="Raw\BitReverse.cs" />
     <Compile Include="Raw\Disk.cs" />
     <Compile Include="Raw\DiskFactory.cs" />
     <Compile Include="Raw\DiskImageFile.cs" />
+    <Compile Include="Raw\ECM.cs" />
+    <Compile Include="Raw\SectorConversion.cs" />
     <Compile Include="ReadOnlyDiscFileSystem.cs" />
     <Compile Include="ReparsePoint.cs" />
     <Compile Include="Sizes.cs" />

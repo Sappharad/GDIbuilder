@@ -93,6 +93,7 @@ namespace GDIbuilder
                     }
                 }
                 DisableButtons();
+                _builder.RawMode = chkRawMode.Checked;
                 _builder.ReportProgress = UpdateProgress;
                 _worker = new Thread(() => DoDiscBuild(txtData.Text, txtIpBin.Text, cdTracks, txtOutdir.Text));
                 _worker.Start();
@@ -110,6 +111,11 @@ namespace GDIbuilder
                 List<DiscTrack> tracks = _builder.BuildGDROM(dataDir, ipBin, trackList, outdir);
                 Invoke(new Action(() =>
                 {
+                    string gdiPath = System.IO.Path.Combine(outdir, "disc.gdi");
+                    if (System.IO.File.Exists(gdiPath))
+                    {
+                        _builder.UpdateGdiFile(tracks, gdiPath);
+                    }
                     ResultDialog rd = new ResultDialog(_builder.GetGDIText(tracks));
                     rd.ShowDialog();
                     Close();
