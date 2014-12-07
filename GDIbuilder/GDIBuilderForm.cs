@@ -74,6 +74,7 @@ namespace GDIbuilder
                     ((Button)ctrl).Enabled = false;
                 }
             }
+            chkRawMode.Enabled = false;
         }
 
         private void btnMake_Click(object sender, EventArgs e)

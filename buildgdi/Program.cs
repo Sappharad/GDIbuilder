@@ -29,6 +29,7 @@ namespace buildgdi
             }
             GDromBuilder builder = new GDromBuilder();
             builder.ReportProgress += ProgressReport;
+            builder.RawMode = HasArgument("-raw", args);
             if (volume != null)
             {
                 builder.VolumeIdentifier = volume;
@@ -127,6 +128,18 @@ namespace buildgdi
             return true;
         }
 
+        private static bool HasArgument(string argument, string[] args)
+        {
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i].Equals(argument, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private static string GetSoloArgument(string argument, string[] args)
         {
             for (int i = 0; i < args.Length-1; i++)
@@ -185,6 +198,7 @@ namespace buildgdi
             Console.WriteLine("   Existing GDI files will be updated with the new tracks.");
             Console.WriteLine("   If no GDI exists, only lines for tracks 3 and above will be written.");
             Console.WriteLine("-V <volume identifier> (Optional) = The volume name (Default is DREAMCAST)");
+            Console.WriteLine("-raw (Optional) = Output 2352 byte raw disc sectors instead of 2048.");
         }
     }
 }
