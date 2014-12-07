@@ -2,10 +2,10 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="8.00">
 	<data>
 		<int key="IBDocument.SystemTarget">101000</int>
-		<string key="IBDocument.SystemVersion">14C68k</string>
+		<string key="IBDocument.SystemVersion">14C78c</string>
 		<string key="IBDocument.InterfaceBuilderVersion">6254</string>
-		<string key="IBDocument.AppKitVersion">1344.29</string>
-		<string key="IBDocument.HIToolboxVersion">757.10</string>
+		<string key="IBDocument.AppKitVersion">1344.35</string>
+		<string key="IBDocument.HIToolboxVersion">757.20</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
 			<string key="NS.object.0">6254</string>
@@ -232,7 +232,7 @@
 							<string key="NSFrame">{{390, 71}, {92, 32}}</string>
 							<reference key="NSSuperview" ref="312036702"/>
 							<reference key="NSWindow"/>
-							<reference key="NSNextKeyView" ref="204011036"/>
+							<reference key="NSNextKeyView" ref="985508100"/>
 							<string key="NSReuseIdentifierKey">_NS:9</string>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="871235833">
@@ -583,7 +583,6 @@
 							<string key="NSFrame">{{342, 17}, {134, 24}}</string>
 							<reference key="NSSuperview" ref="312036702"/>
 							<reference key="NSWindow"/>
-							<reference key="NSNextKeyView"/>
 							<string key="NSReuseIdentifierKey">_NS:9</string>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="277184281">
@@ -632,6 +631,38 @@
 								<reference key="NSControlView" ref="221978520"/>
 								<int key="NSButtonFlags">-2038284288</int>
 								<int key="NSButtonFlags2">129</int>
+								<string key="NSAlternateContents"/>
+								<string key="NSKeyEquivalent"/>
+								<int key="NSPeriodicDelay">200</int>
+								<int key="NSPeriodicInterval">25</int>
+							</object>
+							<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
+						</object>
+						<object class="NSButton" id="985508100">
+							<reference key="NSNextResponder" ref="312036702"/>
+							<int key="NSvFlags">292</int>
+							<string key="NSFrame">{{242, 51}, {236, 18}}</string>
+							<reference key="NSSuperview" ref="312036702"/>
+							<reference key="NSWindow"/>
+							<reference key="NSNextKeyView" ref="204011036"/>
+							<string key="NSReuseIdentifierKey">_NS:9</string>
+							<bool key="NSEnabled">YES</bool>
+							<object class="NSButtonCell" key="NSCell" id="159522491">
+								<int key="NSCellFlags">67108864</int>
+								<int key="NSCellFlags2">268435456</int>
+								<string key="NSContents">Output raw sectors (2352 mode)</string>
+								<reference key="NSSupport" ref="723900785"/>
+								<string key="NSCellIdentifier">_NS:9</string>
+								<reference key="NSControlView" ref="985508100"/>
+								<int key="NSButtonFlags">1211912448</int>
+								<int key="NSButtonFlags2">2</int>
+								<object class="NSCustomResource" key="NSNormalImage">
+									<string key="NSClassName">NSImage</string>
+									<string key="NSResourceName">NSSwitch</string>
+								</object>
+								<object class="NSButtonImageSource" key="NSAlternateImage">
+									<string key="NSImageName">NSSwitch</string>
+								</object>
 								<string key="NSAlternateContents"/>
 								<string key="NSKeyEquivalent"/>
 								<int key="NSPeriodicDelay">200</int>
@@ -1000,7 +1031,7 @@
 							<int key="NSvFlags">274</int>
 							<string key="NSFrame">{{20, 48}, {380, 78}}</string>
 							<reference key="NSSuperview" ref="844024336"/>
-							<reference key="NSNextKeyView" ref="194464522"/>
+							<reference key="NSNextKeyView" ref="450932051"/>
 							<string key="NSReuseIdentifierKey">_NS:9</string>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSTextFieldCell" key="NSCell" id="172451428">
@@ -1062,6 +1093,29 @@
 								<int key="NSPeriodicInterval">25</int>
 							</object>
 							<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
+						</object>
+						<object class="NSTextField" id="450932051">
+							<reference key="NSNextResponder" ref="844024336"/>
+							<int key="NSvFlags">268</int>
+							<string key="NSFrame">{{18, 9}, {301, 34}}</string>
+							<reference key="NSSuperview" ref="844024336"/>
+							<reference key="NSNextKeyView" ref="194464522"/>
+							<string key="NSReuseIdentifierKey">_NS:526</string>
+							<string key="NSHuggingPriority">{251, 750}</string>
+							<bool key="NSEnabled">YES</bool>
+							<object class="NSTextFieldCell" key="NSCell" id="588391049">
+								<int key="NSCellFlags">67108864</int>
+								<int key="NSCellFlags2">272629760</int>
+								<string key="NSContents">If disc.gdi exists in the output folder, it was automatically updated for you.</string>
+								<reference key="NSSupport" ref="723900785"/>
+								<string key="NSCellIdentifier">_NS:526</string>
+								<reference key="NSControlView" ref="450932051"/>
+								<reference key="NSBackgroundColor" ref="952784514"/>
+								<reference key="NSTextColor" ref="1069039900"/>
+							</object>
+							<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
+							<bool key="NSControlAutosetMaxLayoutWidth">YES</bool>
+							<int key="NSTextFieldAlignmentRectInsetsVersion">1</int>
 						</object>
 					</array>
 					<string key="NSFrameSize">{420, 175}</string>
@@ -1371,6 +1425,14 @@
 					</object>
 					<int key="connectionID">132</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">chkRawMode</string>
+						<reference key="source" ref="1001"/>
+						<reference key="destination" ref="985508100"/>
+					</object>
+					<int key="connectionID">138</int>
+				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<array key="orderedObjects">
@@ -1428,6 +1490,7 @@
 							<reference ref="905930776"/>
 							<reference ref="204011036"/>
 							<reference ref="221978520"/>
+							<reference ref="985508100"/>
 						</array>
 						<reference key="parent" ref="748157544"/>
 					</object>
@@ -1911,6 +1974,7 @@
 							<reference ref="524422443"/>
 							<reference ref="726565707"/>
 							<reference ref="194464522"/>
+							<reference ref="450932051"/>
 						</array>
 						<reference key="parent" ref="1003404692"/>
 					</object>
@@ -1953,6 +2017,32 @@
 						<reference key="object" ref="432207314"/>
 						<reference key="parent" ref="194464522"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">133</int>
+						<reference key="object" ref="985508100"/>
+						<array class="NSMutableArray" key="children">
+							<reference ref="159522491"/>
+						</array>
+						<reference key="parent" ref="312036702"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">134</int>
+						<reference key="object" ref="159522491"/>
+						<reference key="parent" ref="985508100"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">135</int>
+						<reference key="object" ref="450932051"/>
+						<array class="NSMutableArray" key="children">
+							<reference ref="588391049"/>
+						</array>
+						<reference key="parent" ref="844024336"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">136</int>
+						<reference key="object" ref="588391049"/>
+						<reference key="parent" ref="450932051"/>
+					</object>
 				</array>
 			</object>
 			<dictionary class="NSMutableDictionary" key="flattenedProperties">
@@ -1963,6 +2053,11 @@
 				<string key="11.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="12.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="13.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="133.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="134.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<boolean value="YES" key="135.IBNSControlSetsMaxLayoutWidthAtFirstLayoutMetadataKey"/>
+				<string key="135.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="136.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="14.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="15.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="16.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -2037,7 +2132,7 @@
 				<string key="86.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="87.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="88.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
-				<string key="89.IBPersistedLastKnownCanvasPosition">{269, 786.5}</string>
+				<string key="89.IBPersistedLastKnownCanvasPosition">{276, 569.5}</string>
 				<string key="89.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<boolean value="NO" key="89.NSWindowTemplate.visibleAtLaunch"/>
 				<string key="9.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -2056,7 +2151,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">132</int>
+			<int key="maxID">138</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -2145,6 +2240,7 @@
 						<string key="btnDown">NSButton</string>
 						<string key="btnRemoveCdda">NSButton</string>
 						<string key="btnUp">NSButton</string>
+						<string key="chkRawMode">NSButton</string>
 						<string key="pbProgress">NSProgressIndicator</string>
 						<string key="tblCdda">NSTableView</string>
 						<string key="txtApplicationId">NSTextField</string>
@@ -2195,6 +2291,10 @@
 						</object>
 						<object class="IBToOneOutletInfo" key="btnUp">
 							<string key="name">btnUp</string>
+							<string key="candidateClassName">NSButton</string>
+						</object>
+						<object class="IBToOneOutletInfo" key="chkRawMode">
+							<string key="name">chkRawMode</string>
 							<string key="candidateClassName">NSButton</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="pbProgress">
@@ -2351,5 +2451,9 @@
 		</object>
 		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
 		<int key="IBDocument.defaultPropertyAccessControl">3</int>
+		<object class="NSMutableDictionary" key="IBDocument.LastKnownImageSizes">
+			<string key="NS.key.0">NSSwitch</string>
+			<string key="NS.object.0">{15, 15}</string>
+		</object>
 	</data>
 </archive>
