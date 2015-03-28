@@ -189,6 +189,7 @@ namespace MacUI
                     }
                 }
                 DisableButtons();
+                _builder.RawMode = (chkRawMode.State == NSCellStateValue.On);
                 _builder.ReportProgress = UpdateProgress;
                 string dataPath = txtData.Cell.Title;
                 string ipBinPath = txtIpBin.Cell.Title;
@@ -213,6 +214,7 @@ namespace MacUI
             btnUp.Enabled = false;
             btnDown.Enabled = false;
             btnRemoveCdda.Enabled = false;
+            chkRawMode.Enabled = false;
         }
 
         private void DoDiscBuild(string dataDir, string ipBin, List<string> trackList, string outdir)
@@ -222,6 +224,10 @@ namespace MacUI
                 List<DiscTrack> tracks = _builder.BuildGDROM(dataDir, ipBin, trackList, outdir);
                 InvokeOnMainThread(new NSAction(() =>
                 {
+                    string gdiPath = System.IO.Path.Combine(outdir, "disc.gdi");
+                    if(System.IO.File.Exists(gdiPath)){
+                        _builder.UpdateGdiFile(tracks, gdiPath);
+                    }
                     txtResult.Cell.Title = _builder.GetGDIText(tracks);
                     NSApplication.SharedApplication.BeginSheet(winFinished, Window);
                 }));

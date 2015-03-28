@@ -40,6 +40,9 @@ namespace MacUI
 		MonoMac.AppKit.NSButton btnUp { get; set; }
 
 		[Outlet]
+		MonoMac.AppKit.NSButton chkRawMode { get; set; }
+
+		[Outlet]
 		MonoMac.AppKit.NSProgressIndicator pbProgress { get; set; }
 
 		[Outlet]
@@ -119,19 +122,14 @@ namespace MacUI
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (winAdvanced != null) {
-				winAdvanced.Dispose ();
-				winAdvanced = null;
+			if (btnAddCdda != null) {
+				btnAddCdda.Dispose ();
+				btnAddCdda = null;
 			}
 
-			if (winFinished != null) {
-				winFinished.Dispose ();
-				winFinished = null;
-			}
-
-			if (txtData != null) {
-				txtData.Dispose ();
-				txtData = null;
+			if (btnAdvanced != null) {
+				btnAdvanced.Dispose ();
+				btnAdvanced = null;
 			}
 
 			if (btnBrowseData != null) {
@@ -139,24 +137,24 @@ namespace MacUI
 				btnBrowseData = null;
 			}
 
-			if (txtIpBin != null) {
-				txtIpBin.Dispose ();
-				txtIpBin = null;
-			}
-
 			if (btnBrowseIpBin != null) {
 				btnBrowseIpBin.Dispose ();
 				btnBrowseIpBin = null;
 			}
 
-			if (tblCdda != null) {
-				tblCdda.Dispose ();
-				tblCdda = null;
+			if (btnBrowseOutput != null) {
+				btnBrowseOutput.Dispose ();
+				btnBrowseOutput = null;
 			}
 
-			if (btnAddCdda != null) {
-				btnAddCdda.Dispose ();
-				btnAddCdda = null;
+			if (btnCreate != null) {
+				btnCreate.Dispose ();
+				btnCreate = null;
+			}
+
+			if (btnDown != null) {
+				btnDown.Dispose ();
+				btnDown = null;
 			}
 
 			if (btnRemoveCdda != null) {
@@ -169,29 +167,9 @@ namespace MacUI
 				btnUp = null;
 			}
 
-			if (btnDown != null) {
-				btnDown.Dispose ();
-				btnDown = null;
-			}
-
-			if (txtOutput != null) {
-				txtOutput.Dispose ();
-				txtOutput = null;
-			}
-
-			if (btnBrowseOutput != null) {
-				btnBrowseOutput.Dispose ();
-				btnBrowseOutput = null;
-			}
-
-			if (btnAdvanced != null) {
-				btnAdvanced.Dispose ();
-				btnAdvanced = null;
-			}
-
-			if (btnCreate != null) {
-				btnCreate.Dispose ();
-				btnCreate = null;
+			if (chkRawMode != null) {
+				chkRawMode.Dispose ();
+				chkRawMode = null;
 			}
 
 			if (pbProgress != null) {
@@ -199,9 +177,44 @@ namespace MacUI
 				pbProgress = null;
 			}
 
-			if (txtVolumeId != null) {
-				txtVolumeId.Dispose ();
-				txtVolumeId = null;
+			if (tblCdda != null) {
+				tblCdda.Dispose ();
+				tblCdda = null;
+			}
+
+			if (txtApplicationId != null) {
+				txtApplicationId.Dispose ();
+				txtApplicationId = null;
+			}
+
+			if (txtData != null) {
+				txtData.Dispose ();
+				txtData = null;
+			}
+
+			if (txtDataPreparer != null) {
+				txtDataPreparer.Dispose ();
+				txtDataPreparer = null;
+			}
+
+			if (txtIpBin != null) {
+				txtIpBin.Dispose ();
+				txtIpBin = null;
+			}
+
+			if (txtOutput != null) {
+				txtOutput.Dispose ();
+				txtOutput = null;
+			}
+
+			if (txtPublisherId != null) {
+				txtPublisherId.Dispose ();
+				txtPublisherId = null;
+			}
+
+			if (txtResult != null) {
+				txtResult.Dispose ();
+				txtResult = null;
 			}
 
 			if (txtSystemId != null) {
@@ -214,24 +227,19 @@ namespace MacUI
 				txtVolSetId = null;
 			}
 
-			if (txtPublisherId != null) {
-				txtPublisherId.Dispose ();
-				txtPublisherId = null;
+			if (txtVolumeId != null) {
+				txtVolumeId.Dispose ();
+				txtVolumeId = null;
 			}
 
-			if (txtDataPreparer != null) {
-				txtDataPreparer.Dispose ();
-				txtDataPreparer = null;
+			if (winAdvanced != null) {
+				winAdvanced.Dispose ();
+				winAdvanced = null;
 			}
 
-			if (txtApplicationId != null) {
-				txtApplicationId.Dispose ();
-				txtApplicationId = null;
-			}
-
-			if (txtResult != null) {
-				txtResult.Dispose ();
-				txtResult = null;
+			if (winFinished != null) {
+				winFinished.Dispose ();
+				winFinished = null;
 			}
 		}
 	}
