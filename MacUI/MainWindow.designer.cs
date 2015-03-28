@@ -43,6 +43,9 @@ namespace MacUI
 		MonoMac.AppKit.NSButton chkRawMode { get; set; }
 
 		[Outlet]
+		MonoMac.AppKit.NSButton chkTruncateMode { get; set; }
+
+		[Outlet]
 		MonoMac.AppKit.NSProgressIndicator pbProgress { get; set; }
 
 		[Outlet]
@@ -122,6 +125,11 @@ namespace MacUI
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (chkTruncateMode != null) {
+				chkTruncateMode.Dispose ();
+				chkTruncateMode = null;
+			}
+
 			if (btnAddCdda != null) {
 				btnAddCdda.Dispose ();
 				btnAddCdda = null;

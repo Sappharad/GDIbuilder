@@ -150,6 +150,7 @@ namespace MacUI
             txtPublisherId.Cell.Title = _builder.PublisherIdentifier;
             txtDataPreparer.Cell.Title = _builder.DataPreparerIdentifier;
             txtApplicationId.Cell.Title = _builder.ApplicationIdentifier;
+            chkTruncateMode.State = (_builder.TruncateData)?NSCellStateValue.On:NSCellStateValue.Off;
 
             //This is deprecated and we shouldn't be using it. Thanks Xamarin... :-(
             NSApplication.SharedApplication.BeginSheet(winAdvanced, Window);
@@ -167,6 +168,7 @@ namespace MacUI
             _builder.PublisherIdentifier = txtPublisherId.Cell.Title;
             _builder.DataPreparerIdentifier = txtDataPreparer.Cell.Title;
             _builder.ApplicationIdentifier = txtApplicationId.Cell.Title;
+            _builder.TruncateData = (chkTruncateMode.State == NSCellStateValue.On);
 
             NSApplication.SharedApplication.EndSheet(winAdvanced);
             winAdvanced.OrderOut(winAdvanced);

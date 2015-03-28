@@ -17,7 +17,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>GDIBuilder</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.1</string>
+	<string>1.2</string>
 	<key>CFBundleIconFile</key>
 	<string>BlankMedia</string>
 	<key>LSApplicationCategoryType</key>
