@@ -27,6 +27,7 @@ namespace DiscUtils.Gdrom
         public string Track03Path { get; set; }
         public string LastTrackPath { get; set; }
         public bool RawMode { get; set; }
+        public bool TruncateData { get; set; }
 
         public GDromBuilder()
         {
@@ -74,7 +75,7 @@ namespace DiscUtils.Gdrom
             using (BuiltStream isoStream = (BuiltStream)builder.Build())
             {
                 _lastProgress = 0;
-                if (retval.Count > 0)
+                if (retval.Count > 0 || (TruncateData && !string.IsNullOrEmpty(LastTrackPath)))
                 {
                     if (RawMode)
                     {
@@ -250,6 +251,10 @@ namespace DiscUtils.Gdrom
             {
                 throw new Exception("Not enough room to fit all of the CDDA after we added the data.");
             }
+            if (TruncateData)
+            {
+                trackEnd = (int)lastHeaderEnd;
+            }
             DiscTrack track3 = new DiscTrack();
             track3.FileName = Path.GetFileName(Track03Path);
             track3.LBA = GD_START_LBA;
@@ -359,6 +364,10 @@ namespace DiscUtils.Gdrom
             if (trackEnd < lastHeaderEnd)
             {
                 throw new Exception("Not enough room to fit all of the CDDA after we added the data.");
+            }
+            if (TruncateData)
+            {
+                trackEnd = (int)lastHeaderEnd;
             }
             DiscTrack track3 = new DiscTrack();
             track3.FileName = Path.GetFileName(Track03Path);
@@ -556,9 +565,9 @@ namespace DiscUtils.Gdrom
             {
                 string[] file = File.ReadAllLines(gdiPath);
                 int i = 0;
+                sb.AppendLine((tracks.Count + 2).ToString());
                 if (file.Length > 0 && file[0].Length <= 3)
                 {
-                    sb.AppendLine(file[0]);
                     i++;
                 }
                 for (; i < file.Length; i++)

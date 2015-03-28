@@ -178,6 +178,7 @@ namespace GDIbuilder
             adv.PublisherIdentifier = _builder.PublisherIdentifier;
             adv.DataPreparerIdentifier = _builder.DataPreparerIdentifier;
             adv.ApplicationIdentifier = _builder.ApplicationIdentifier;
+            adv.TruncateMode = _builder.TruncateData;
             if (adv.ShowDialog() == DialogResult.OK)
             {
                 _builder.VolumeIdentifier = adv.VolumeIdentifier;
@@ -186,6 +187,7 @@ namespace GDIbuilder
                 _builder.PublisherIdentifier = adv.PublisherIdentifier;
                 _builder.DataPreparerIdentifier = adv.DataPreparerIdentifier;
                 _builder.ApplicationIdentifier = adv.ApplicationIdentifier;
+                _builder.TruncateData = adv.TruncateMode;
             }
         }
     }

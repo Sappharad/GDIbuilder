@@ -42,6 +42,7 @@
             this.lblPublisher = new System.Windows.Forms.Label();
             this.lblDataPrep = new System.Windows.Forms.Label();
             this.lblApplication = new System.Windows.Forms.Label();
+            this.chkTruncateMode = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btnOK
@@ -162,6 +163,16 @@
             this.lblApplication.TabIndex = 13;
             this.lblApplication.Text = "Application ID:";
             // 
+            // chkTruncateMode
+            // 
+            this.chkTruncateMode.AutoSize = true;
+            this.chkTruncateMode.Location = new System.Drawing.Point(96, 88);
+            this.chkTruncateMode.Name = "chkTruncateMode";
+            this.chkTruncateMode.Size = new System.Drawing.Size(174, 17);
+            this.chkTruncateMode.TabIndex = 14;
+            this.chkTruncateMode.Text = "Generate truncated track03.bin";
+            this.chkTruncateMode.UseVisualStyleBackColor = true;
+            // 
             // AdvancedDialog
             // 
             this.AcceptButton = this.btnOK;
@@ -170,6 +181,7 @@
             this.CancelButton = this.btnCancel;
             this.ClientSize = new System.Drawing.Size(512, 128);
             this.ControlBox = false;
+            this.Controls.Add(this.chkTruncateMode);
             this.Controls.Add(this.lblApplication);
             this.Controls.Add(this.lblDataPrep);
             this.Controls.Add(this.lblPublisher);
@@ -208,5 +220,6 @@
         private System.Windows.Forms.Label lblPublisher;
         private System.Windows.Forms.Label lblDataPrep;
         private System.Windows.Forms.Label lblApplication;
+        private System.Windows.Forms.CheckBox chkTruncateMode;
     }
 }

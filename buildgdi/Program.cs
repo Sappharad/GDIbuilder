@@ -22,14 +22,16 @@ namespace buildgdi
             List<string> cdda = GetMultiArgument("-cdda", args);
             string gdiPath = GetSoloArgument("-gdi", args);
             string volume = GetSoloArgument("-V", args);
+            bool truncate = HasArgument("-truncate", args);
             bool fileOutput = false;
-            if (CheckArguments(data, ipBin, outPath, cdda, out fileOutput) == false)
+            if (CheckArguments(data, ipBin, outPath, cdda, truncate, out fileOutput) == false)
             {
                 return;
             }
             GDromBuilder builder = new GDromBuilder();
             builder.ReportProgress += ProgressReport;
             builder.RawMode = HasArgument("-raw", args);
+            builder.TruncateData = truncate;
             if (volume != null)
             {
                 builder.VolumeIdentifier = volume;
@@ -39,7 +41,7 @@ namespace buildgdi
             if (fileOutput)
             {
                 builder.Track03Path = Path.GetFullPath(outPath[0]);
-                if (outPath.Count == 2 && cdda.Count > 0)
+                if (outPath.Count == 2 && (cdda.Count > 0 || builder.TruncateData))
                 {
                     builder.LastTrackPath = Path.GetFullPath(outPath[1]);
                 }
@@ -68,7 +70,7 @@ namespace buildgdi
             }
         }
 
-        private static bool CheckArguments(string data, string ipBin, List<string> outPath, List<string> cdda, out bool fileOutput)
+        private static bool CheckArguments(string data, string ipBin, List<string> outPath, List<string> cdda, bool truncate, out bool fileOutput)
         {
             fileOutput = false;
             if (data == null || ipBin == null || outPath.Count == 0)
@@ -119,7 +121,13 @@ namespace buildgdi
                 {
                     fileOutput = true;
                 }
-                if (cdda.Count == 0 && fileOutput)
+                if (truncate && fileOutput)
+                {
+                    Console.WriteLine("Can't output a single data track in truncated data mode.");
+                    Console.WriteLine("Please provide two different output tracks.");
+                    return false;
+                }
+                if (cdda.Count > 0 && fileOutput)
                 {
                     Console.WriteLine("Can't output a single track when CDDA is specified.");
                     return false;
@@ -199,6 +207,7 @@ namespace buildgdi
             Console.WriteLine("   If no GDI exists, only lines for tracks 3 and above will be written.");
             Console.WriteLine("-V <volume identifier> (Optional) = The volume name (Default is DREAMCAST)");
             Console.WriteLine("-raw (Optional) = Output 2352 byte raw disc sectors instead of 2048.");
+            Console.WriteLine("-truncate (Optional) = Do not pad generated data to the correct size.");
         }
     }
 }

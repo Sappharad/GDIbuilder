@@ -234,6 +234,8 @@
             // chkRawMode
             // 
             this.chkRawMode.AutoSize = true;
+            this.chkRawMode.Checked = true;
+            this.chkRawMode.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkRawMode.Location = new System.Drawing.Point(213, 199);
             this.chkRawMode.Name = "chkRawMode";
             this.chkRawMode.Size = new System.Drawing.Size(177, 17);

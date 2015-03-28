@@ -22,5 +22,6 @@ namespace GDIbuilder
         public string PublisherIdentifier { get { return txtPublisher.Text; } set { txtPublisher.Text = value; } }
         public string DataPreparerIdentifier { get { return txtDataPrep.Text; } set { txtDataPrep.Text = value; } }
         public string ApplicationIdentifier { get { return txtApplication.Text; } set { txtApplication.Text = value; } }
+        public bool TruncateMode { get { return chkTruncateMode.Checked; } set { chkTruncateMode.Checked = value; } }
     }
 }
