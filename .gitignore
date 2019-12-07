@@ -184,3 +184,4 @@ FakesAssemblies/
 /GDIbuilder/DiscUtils/DiscUtils.dll.xml
 
 *.userprefs
+GDIbuilder/.vs
