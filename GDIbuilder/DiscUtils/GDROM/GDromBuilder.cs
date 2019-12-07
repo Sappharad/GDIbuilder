@@ -621,7 +621,16 @@ namespace DiscUtils.Gdrom
         private void PopulateFromFolder(CDBuilder builder, DirectoryInfo di, string basePath, string bootBin)
         {
             FileInfo bootBinFile = null;
-            foreach (FileInfo file in di.GetFiles())
+            FileInfo[] folderFiles = di.GetFiles();
+            //Add directory first, so we can set the creation time correctly.
+            string localDirPath = di.FullName.Substring(basePath.Length);
+            if (localDirPath.Length > 1)
+            {
+                //Add directory first, so it has the correct creation time.
+                BuildDirectoryInfo dir = builder.AddDirectory(localDirPath);
+                dir.CreationTime = di.CreationTimeUtc;
+            }
+            foreach (FileInfo file in folderFiles)
             {
                 string filePath = file.FullName.Substring(basePath.Length);
                 if (bootBin != null && file.Name.Equals(bootBin, StringComparison.OrdinalIgnoreCase))
