@@ -1,18 +1,13 @@
-﻿using System;
-using System.Drawing;
-using MonoMac.Foundation;
-using MonoMac.AppKit;
-using MonoMac.ObjCRuntime;
+﻿using AppKit;
 
-namespace MacUI
+namespace GDIBuilderMac
 {
-    class MainClass
+    static class MainClass
     {
-        static void Main (string[] args)
+        static void Main(string[] args)
         {
-            NSApplication.Init ();
-            NSApplication.Main (args);
+            NSApplication.Init();
+            NSApplication.Main(args);
         }
     }
 }
-

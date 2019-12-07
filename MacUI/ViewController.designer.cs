@@ -1,135 +1,130 @@
 // WARNING
 //
-// This file has been generated automatically by Xamarin Studio to store outlets and
+// This file has been generated automatically by Visual Studio to store outlets and
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoMac.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
-namespace MacUI
+namespace GDIBuilderMac
 {
-	[Register ("MainWindowController")]
-	partial class MainWindowController
+	[Register ("ViewController")]
+	partial class ViewController
 	{
 		[Outlet]
-		MonoMac.AppKit.NSButton btnAddCdda { get; set; }
+		AppKit.NSButton btnAddCdda { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton btnAdvanced { get; set; }
+		AppKit.NSButton btnAdvanced { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton btnBrowseData { get; set; }
+		AppKit.NSButton btnBrowseData { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton btnBrowseIpBin { get; set; }
+		AppKit.NSButton btnBrowseIpBin { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton btnBrowseOutput { get; set; }
+		AppKit.NSButton btnBrowseOutput { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton btnCreate { get; set; }
+		AppKit.NSButton btnCreate { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton btnDown { get; set; }
+		AppKit.NSButton btnDown { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton btnRemoveCdda { get; set; }
+		AppKit.NSButton btnRemoveCdda { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton btnUp { get; set; }
+		AppKit.NSButton btnUp { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton chkRawMode { get; set; }
+		AppKit.NSButton chkRawMode { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSButton chkTruncateMode { get; set; }
+		AppKit.NSButton chkTruncateMode { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSProgressIndicator pbProgress { get; set; }
+		AppKit.NSProgressIndicator pbProgress { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTableView tblCdda { get; set; }
+		AppKit.NSTableView tblCdda { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtApplicationId { get; set; }
+		AppKit.NSTextField txtApplicationId { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtData { get; set; }
+		AppKit.NSTextField txtData { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtDataPreparer { get; set; }
+		AppKit.NSTextField txtDataPreparer { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtIpBin { get; set; }
+		AppKit.NSTextField txtIpBin { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtOutput { get; set; }
+		AppKit.NSTextField txtOutput { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtPublisherId { get; set; }
+		AppKit.NSTextField txtPublisherId { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtResult { get; set; }
+		AppKit.NSTextField txtResult { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtSystemId { get; set; }
+		AppKit.NSTextField txtSystemId { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtVolSetId { get; set; }
+		AppKit.NSTextField txtVolSetId { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSTextField txtVolumeId { get; set; }
+		AppKit.NSTextField txtVolumeId { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSWindow winAdvanced { get; set; }
+		AppKit.NSWindow winAdvanced { get; set; }
 
 		[Outlet]
-		MonoMac.AppKit.NSWindow winFinished { get; set; }
+		AppKit.NSWindow winFinished { get; set; }
 
-		[Action ("btnAdd_Clicked:")]
-		partial void btnAdd_Clicked (MonoMac.Foundation.NSObject sender);
+		[Action ("btnAddCdda_Clicked:")]
+		partial void btnAddCdda_Clicked (Foundation.NSObject sender);
 
 		[Action ("btnAdvanced_Clicked:")]
-		partial void btnAdvanced_Clicked (MonoMac.Foundation.NSObject sender);
+		partial void btnAdvanced_Clicked (Foundation.NSObject sender);
 
-		[Action ("btnAdvCancel_Clicked:")]
-		partial void btnAdvCancel_Clicked (MonoMac.Foundation.NSObject sender);
+		[Action ("btnAdvancedCancel_Clicked:")]
+		partial void btnAdvancedCancel_Clicked (Foundation.NSObject sender);
 
-		[Action ("btnAdvOK_Clicked:")]
-		partial void btnAdvOK_Clicked (MonoMac.Foundation.NSObject sender);
+		[Action ("btnAdvancedOk_Clicked:")]
+		partial void btnAdvancedOk_Clicked (Foundation.NSObject sender);
 
 		[Action ("btnBrowseData_Clicked:")]
-		partial void btnBrowseData_Clicked (MonoMac.Foundation.NSObject sender);
+		partial void btnBrowseData_Clicked (Foundation.NSObject sender);
 
 		[Action ("btnBrowseIpBin_Clicked:")]
-		partial void btnBrowseIpBin_Clicked (MonoMac.Foundation.NSObject sender);
+		partial void btnBrowseIpBin_Clicked (Foundation.NSObject sender);
 
 		[Action ("btnBrowseOutput_Clicked:")]
-		partial void btnBrowseOutput_Clicked (MonoMac.Foundation.NSObject sender);
+		partial void btnBrowseOutput_Clicked (Foundation.NSObject sender);
 
 		[Action ("btnCreate_Clicked:")]
-		partial void btnCreate_Clicked (MonoMac.Foundation.NSObject sender);
+		partial void btnCreate_Clicked (Foundation.NSObject sender);
 
 		[Action ("btnDown_Clicked:")]
-		partial void btnDown_Clicked (MonoMac.Foundation.NSObject sender);
+		partial void btnDown_Clicked (Foundation.NSObject sender);
 
-		[Action ("btnFinishedOK_Clicked:")]
-		partial void btnFinishedOK_Clicked (MonoMac.Foundation.NSObject sender);
+		[Action ("btnFinishedOk_Clicked:")]
+		partial void btnFinishedOk_Clicked (Foundation.NSObject sender);
 
-		[Action ("btnRemove_Clicked:")]
-		partial void btnRemove_Clicked (MonoMac.Foundation.NSObject sender);
+		[Action ("btnRemoveCdda_Clicked:")]
+		partial void btnRemoveCdda_Clicked (Foundation.NSObject sender);
 
 		[Action ("btnUp_Clicked:")]
-		partial void btnUp_Clicked (MonoMac.Foundation.NSObject sender);
+		partial void btnUp_Clicked (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (chkTruncateMode != null) {
-				chkTruncateMode.Dispose ();
-				chkTruncateMode = null;
-			}
-
 			if (btnAddCdda != null) {
 				btnAddCdda.Dispose ();
 				btnAddCdda = null;
@@ -178,6 +173,11 @@ namespace MacUI
 			if (chkRawMode != null) {
 				chkRawMode.Dispose ();
 				chkRawMode = null;
+			}
+
+			if (chkTruncateMode != null) {
+				chkTruncateMode.Dispose ();
+				chkTruncateMode = null;
 			}
 
 			if (pbProgress != null) {
@@ -249,15 +249,6 @@ namespace MacUI
 				winFinished.Dispose ();
 				winFinished = null;
 			}
-		}
-	}
-
-	[Register ("MainWindow")]
-	partial class MainWindow
-	{
-		
-		void ReleaseDesignerOutlets ()
-		{
 		}
 	}
 }
