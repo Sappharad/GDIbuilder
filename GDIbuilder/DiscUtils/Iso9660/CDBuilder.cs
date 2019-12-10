@@ -207,7 +207,7 @@ namespace DiscUtils.Iso9660
         /// </remarks>
         public BuildDirectoryInfo AddDirectory(string name)
         {
-            string[] nameElements = name.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] nameElements = name.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
             return GetDirectory(nameElements, nameElements.Length, true);
         }
 
@@ -260,7 +260,7 @@ namespace DiscUtils.Iso9660
         /// </remarks>
         public BuildFileInfo AddFile(string name, string sourcePath)
         {
-            string[] nameElements = name.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] nameElements = name.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
             BuildDirectoryInfo dir = GetDirectory(nameElements, nameElements.Length - 1, true);
 
             BuildDirectoryMember existing;
@@ -298,7 +298,7 @@ namespace DiscUtils.Iso9660
                 throw new ArgumentException("source doesn't support seeking", "source");
             }
 
-            string[] nameElements = name.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] nameElements = name.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
             BuildDirectoryInfo dir = GetDirectory(nameElements, nameElements.Length - 1, true);
 
             BuildDirectoryMember existing;
