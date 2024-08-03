@@ -1,12 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using DiscUtils.Iso9660;
 using DiscUtils.Gdrom;
 using System.Threading;
 
@@ -16,6 +10,7 @@ namespace GDIbuilder
     {
         private GDromBuilder _builder;
         private Thread _worker;
+        private CancellationTokenSource _cancelTokenSource;
 
         public GDIBuilderForm()
         {
@@ -51,7 +46,17 @@ namespace GDIbuilder
             {
                 foreach (string file in ofd.FileNames)
                 {
-                    lstCdda.Items.Add(new CddaItem { FilePath = file });
+                    if (file.EndsWith("track02.raw", StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        MessageBox.Show(this, "This tool is only for building the high density area of a GD-ROM. " +
+                            "You selected Track 2, which is part of the PC readable portion of the disc. " +
+                            "This file has been automatically ignored. Please read the instructions for more information.",
+                            "A mistake was made", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    }
+                    else
+                    {
+                        lstCdda.Items.Add(new CddaItem { FilePath = file });
+                    }
                 }
             }
         }
@@ -65,16 +70,20 @@ namespace GDIbuilder
             }
         }
 
-        private void DisableButtons()
+        private void EnableOrDisableButtons(bool disable)
         {
-            foreach (Control ctrl in this.Controls)
-            {
-                if (ctrl is Button)
-                {
-                    ((Button)ctrl).Enabled = false;
-                }
-            }
-            chkRawMode.Enabled = false;
+            btnAddCdda.Enabled = !disable;
+            btnAdvanced.Enabled = !disable;
+            btnSelectData.Enabled = !disable;
+            btnSelectIP.Enabled = !disable;
+            btnSelOutput.Enabled = !disable;
+            btnMake.Enabled = !disable;
+            btnMoveCddaUp.Enabled = !disable;
+            btnMoveCddaDown.Enabled = !disable;
+            btnRemoveCdda.Enabled = !disable;
+            chkRawMode.Enabled = !disable;
+
+            btnCancel.Enabled = disable;
         }
 
         private void btnMake_Click(object sender, EventArgs e)
@@ -89,13 +98,15 @@ namespace GDIbuilder
                 string checkMsg = _builder.CheckOutputExists(cdTracks, txtOutdir.Text);
                 if (checkMsg != null)
                 {
-                    if(MessageBox.Show(checkMsg,"Warning",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)==DialogResult.No){
+                    if (MessageBox.Show(checkMsg, "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                    {
                         return;
                     }
                 }
-                DisableButtons();
+                EnableOrDisableButtons(disable: true);
                 _builder.RawMode = chkRawMode.Checked;
                 _builder.ReportProgress = UpdateProgress;
+                _cancelTokenSource = new CancellationTokenSource();
                 _worker = new Thread(() => DoDiscBuild(txtData.Text, txtIpBin.Text, cdTracks, txtOutdir.Text));
                 _worker.Start();
             }
@@ -109,25 +120,42 @@ namespace GDIbuilder
         {
             try
             {
-                List<DiscTrack> tracks = _builder.BuildGDROM(dataDir, ipBin, trackList, outdir);
-                Invoke(new Action(() =>
+                List<DiscTrack> tracks = _builder.BuildGDROM(dataDir, ipBin, trackList, outdir, _cancelTokenSource.Token);
+                if (_cancelTokenSource.IsCancellationRequested)
                 {
-                    string gdiPath = System.IO.Path.Combine(outdir, "disc.gdi");
-                    if (System.IO.File.Exists(gdiPath))
+                    Invoke(new Action(() =>
                     {
-                        _builder.UpdateGdiFile(tracks, gdiPath);
-                    }
-                    ResultDialog rd = new ResultDialog(_builder.GetGDIText(tracks));
-                    rd.ShowDialog();
-                    Close();
-                }));
+                        EnableOrDisableButtons(disable: false);
+                        pbProgress.Value = 0;
+                    }));
+                }
+                else
+                {
+                    Invoke(new Action(() =>
+                    {
+                        string gdiPath = System.IO.Path.Combine(outdir, "disc.gdi");
+                        if (System.IO.File.Exists(gdiPath))
+                        {
+                            _builder.UpdateGdiFile(tracks, gdiPath);
+                        }
+                        ResultDialog rd = new ResultDialog(_builder.GetGDIText(tracks));
+                        rd.ShowDialog();
+                        Close();
+                    }));
+                }
             }
             catch (Exception ex)
             {
-                Invoke(new Action(()=>{
-                    MessageBox.Show("Failed to build disc.\n"+ex.Message,"Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
+                Invoke(new Action(() =>
+                {
+                    MessageBox.Show("Failed to build disc.\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Close();
                 }));
+            }
+            finally
+            {
+                _cancelTokenSource.Dispose();
+                _cancelTokenSource = null;
             }
             _worker = null;
         }
@@ -159,7 +187,7 @@ namespace GDIbuilder
 
         private void btnMoveCddaDown_Click(object sender, EventArgs e)
         {
-            if (lstCdda.SelectedIndex >= 0 && lstCdda.SelectedIndex < lstCdda.Items.Count-1)
+            if (lstCdda.SelectedIndex >= 0 && lstCdda.SelectedIndex < lstCdda.Items.Count - 1)
             {
                 int idx = lstCdda.SelectedIndex;
                 object item = lstCdda.Items[idx];
@@ -171,7 +199,7 @@ namespace GDIbuilder
 
         private void btnAdvanced_Click(object sender, EventArgs e)
         {
-            AdvancedDialog adv = new AdvancedDialog();
+            using AdvancedDialog adv = new AdvancedDialog();
             adv.VolumeIdentifier = _builder.VolumeIdentifier;
             adv.SystemIdentifier = _builder.SystemIdentifier;
             adv.VolumeSetIdentifier = _builder.VolumeSetIdentifier;
@@ -189,6 +217,11 @@ namespace GDIbuilder
                 _builder.ApplicationIdentifier = adv.ApplicationIdentifier;
                 _builder.TruncateData = adv.TruncateMode;
             }
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            _cancelTokenSource?.Cancel();
         }
     }
 
