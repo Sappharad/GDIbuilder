@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Linq;
+using System.IO;
 using System.Text;
+using DiscUtils.Raw;
 using DiscUtils.Iso9660;
 using System.Collections.Generic;
-using System.IO;
-using DiscUtils;
-using DiscUtils.Raw;
+using System.Threading;
 
 namespace DiscUtils.Gdrom
 {
@@ -39,7 +38,7 @@ namespace DiscUtils.Gdrom
             ApplicationIdentifier = string.Empty;
         }
 
-        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda)
+        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda, CancellationToken? token = null)
         {
             string bootBin;
             byte[] ipbinData = new byte[0x8000];
@@ -62,7 +61,10 @@ namespace DiscUtils.Gdrom
                 }
                 bootBin = GetBootBin(ipfs);
                 ipfs.Seek(0, SeekOrigin.Begin);
-                ipfs.Read(ipbinData, 0, ipbinData.Length);
+                if (ipfs.Read(ipbinData, 0, ipbinData.Length) < ipbinData.Length)
+                {
+                    throw new Exception("Unable to read the entire IP.BIN file. Cannot continue.");
+                }
             }
             List<DiscTrack> retval = new List<DiscTrack>();
             if (cdda != null && cdda.Count > 0)
@@ -71,7 +73,8 @@ namespace DiscUtils.Gdrom
             }
             DirectoryInfo di = new DirectoryInfo(data);
             PopulateFromFolder(builder, di, di.FullName, bootBin);
-
+            if (token?.IsCancellationRequested == true) return null;
+            
             using (BuiltStream isoStream = (BuiltStream)builder.Build())
             {
                 _lastProgress = 0;
@@ -79,36 +82,36 @@ namespace DiscUtils.Gdrom
                 {
                     if (RawMode)
                     {
-                        ExportMultiTrackRaw(isoStream, ipbinData, retval);
+                        ExportMultiTrackRaw(isoStream, ipbinData, retval, token);
                     }
                     else
                     {
-                        ExportMultiTrack(isoStream, ipbinData, retval);
+                        ExportMultiTrack(isoStream, ipbinData, retval, token);
                     }
                 }
                 else
                 {
                     if (RawMode)
                     {
-                        ExportSingleTrackRaw(isoStream, ipbinData, retval);
+                        ExportSingleTrackRaw(isoStream, ipbinData, retval, token);
                     }
                     else
                     {
-                        ExportSingleTrack(isoStream, ipbinData, retval);
+                        ExportSingleTrack(isoStream, ipbinData, retval, token);
                     }
                 }
             }
             return retval;
         }
 
-        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda, string outDir)
+        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda, string outDir, CancellationToken? token = null)
         {
             Track03Path = Path.Combine(outDir, "track03.bin");
-            LastTrackPath = Path.Combine(outDir, GetLastTrackName(cdda != null ? cdda.Count : 0));
-            return BuildGDROM(data, ipbin, cdda);
+            LastTrackPath = Path.Combine(outDir, GetLastTrackName(cdda?.Count ?? 0));
+            return BuildGDROM(data, ipbin, cdda, token);
         }
 
-        private void ExportSingleTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
+        private void ExportSingleTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks, CancellationToken? token)
         {
             long currentBytes = 0;
             long totalBytes = isoStream.Length;
@@ -137,14 +140,13 @@ namespace DiscUtils.Gdrom
                     skip++;
                     if (skip >= 10)
                     {
+                        if (token?.IsCancellationRequested == true) return;
                         skip = 0;
-                        int percent = (int)((currentBytes*100) / totalBytes);
+                        int percent = (int)((currentBytes * 100) / totalBytes);
                         if (percent > _lastProgress)
                         {
                             _lastProgress = percent;
-                            if(ReportProgress != null){
-                                ReportProgress(_lastProgress);
-                            }
+                            ReportProgress?.Invoke(_lastProgress);
                         }
                     }
                 }
@@ -154,7 +156,7 @@ namespace DiscUtils.Gdrom
         /// <summary>
         /// Separate raw logic to maintain performance of the 2048 version
         /// </summary>
-        private void ExportSingleTrackRaw(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
+        private void ExportSingleTrackRaw(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks, CancellationToken? token)
         {
             long currentBytes = 0;
             long totalBytes = isoStream.Length;
@@ -205,22 +207,20 @@ namespace DiscUtils.Gdrom
                     skip++;
                     if (skip >= 10)
                     {
+                        if (token?.IsCancellationRequested == true) return;
                         skip = 0;
                         int percent = (int)((currentBytes * 100) / totalBytes);
                         if (percent > _lastProgress)
                         {
                             _lastProgress = percent;
-                            if (ReportProgress != null)
-                            {
-                                ReportProgress(_lastProgress);
-                            }
+                            ReportProgress?.Invoke(_lastProgress);
                         }
                     }
                 }
             }
         }
         
-        private void ExportMultiTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
+        private void ExportMultiTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks, CancellationToken? token)
         {
             //There is a 150 sector gap before and after the CDDA
             long lastHeaderEnd = 0;
@@ -291,15 +291,13 @@ namespace DiscUtils.Gdrom
                     skip++;
                     if (skip >= 50)
                     {
+                        if (token?.IsCancellationRequested == true) return;
                         skip = 0;
                         int percent = (int)((currentBytes * 100) / totalBytes);
                         if (percent > _lastProgress)
                         {
                             _lastProgress = percent;
-                            if (ReportProgress != null)
-                            {
-                                ReportProgress(_lastProgress);
-                            }
+                            ReportProgress?.Invoke(_lastProgress);
                         }
                     }
                 }
@@ -319,22 +317,20 @@ namespace DiscUtils.Gdrom
                     skip++;
                     if (skip >= 10)
                     {
+                        if (token?.IsCancellationRequested == true) return;
                         skip = 0;
                         int percent = (int)((currentBytes * 100) / totalBytes);
                         if (percent > _lastProgress)
                         {
                             _lastProgress = percent;
-                            if (ReportProgress != null)
-                            {
-                                ReportProgress(_lastProgress);
-                            }
+                            ReportProgress?.Invoke(_lastProgress);
                         }
                     }
                 }
             }
         }
 
-        private void ExportMultiTrackRaw(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks)
+        private void ExportMultiTrackRaw(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks, CancellationToken? token)
         {
             //There is a 150 sector gap before and after the CDDA
             long lastHeaderEnd = 0;
@@ -427,15 +423,13 @@ namespace DiscUtils.Gdrom
                     skip++;
                     if (skip >= 50)
                     {
+                        if (token?.IsCancellationRequested == true) return;
                         skip = 0;
                         int percent = (int)((currentBytes * 100) / totalBytes);
                         if (percent > _lastProgress)
                         {
                             _lastProgress = percent;
-                            if (ReportProgress != null)
-                            {
-                                ReportProgress(_lastProgress);
-                            }
+                            ReportProgress?.Invoke(_lastProgress);
                         }
                     }
                 }
@@ -472,15 +466,13 @@ namespace DiscUtils.Gdrom
                     skip++;
                     if (skip >= 10)
                     {
+                        if (token?.IsCancellationRequested == true) return;
                         skip = 0;
                         int percent = (int)((currentBytes * 100) / totalBytes);
                         if (percent > _lastProgress)
                         {
                             _lastProgress = percent;
-                            if (ReportProgress != null)
-                            {
-                                ReportProgress(_lastProgress);
-                            }
+                            ReportProgress?.Invoke(_lastProgress);
                         }
                     }
                 }
@@ -618,7 +610,7 @@ namespace DiscUtils.Gdrom
             return System.Text.Encoding.ASCII.GetString(name).Trim();
         }
 
-        private void PopulateFromFolder(CDBuilder builder, DirectoryInfo di, string basePath, string bootBin)
+        private void PopulateFromFolder(CDBuilder builder, DirectoryInfo di, string basePath, string bootBin, CancellationToken? token = null)
         {
             FileInfo bootBinFile = null;
             FileInfo[] folderFiles = di.GetFiles();
@@ -641,6 +633,10 @@ namespace DiscUtils.Gdrom
                 {
                     builder.AddFile(filePath, file.FullName);
                 }
+            }
+            if (token?.IsCancellationRequested == true)
+            {
+                return;
             }
 
             foreach (DirectoryInfo dir in di.GetDirectories())

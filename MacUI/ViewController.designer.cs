@@ -1,7 +1,8 @@
-// WARNING
+﻿// WARNING
 //
-// This file has been generated automatically by Visual Studio to store outlets and
-// actions made in the UI designer. If it is removed, they will be lost.
+// This file has been generated automatically by Rider IDE
+//   to store outlets and actions made in Xcode.
+// If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
 using Foundation;
@@ -26,6 +27,9 @@ namespace GDIBuilderMac
 
 		[Outlet]
 		AppKit.NSButton btnBrowseOutput { get; set; }
+
+		[Outlet]
+		AppKit.NSButton btnCancel { get; set; }
 
 		[Outlet]
 		AppKit.NSButton btnCreate { get; set; }
@@ -108,6 +112,9 @@ namespace GDIBuilderMac
 		[Action ("btnBrowseOutput_Clicked:")]
 		partial void btnBrowseOutput_Clicked (Foundation.NSObject sender);
 
+		[Action ("btnCancel_Clicked:")]
+		partial void btnCancel_Clicked (Foundation.NSObject sender);
+
 		[Action ("btnCreate_Clicked:")]
 		partial void btnCreate_Clicked (Foundation.NSObject sender);
 
@@ -122,7 +129,7 @@ namespace GDIBuilderMac
 
 		[Action ("btnUp_Clicked:")]
 		partial void btnUp_Clicked (Foundation.NSObject sender);
-		
+
 		void ReleaseDesignerOutlets ()
 		{
 			if (btnAddCdda != null) {
@@ -173,6 +180,11 @@ namespace GDIBuilderMac
 			if (chkRawMode != null) {
 				chkRawMode.Dispose ();
 				chkRawMode = null;
+			}
+
+			if (btnCancel != null) {
+				btnCancel.Dispose ();
+				btnCancel = null;
 			}
 
 			if (chkTruncateMode != null) {
@@ -249,6 +261,7 @@ namespace GDIBuilderMac
 				winFinished.Dispose ();
 				winFinished = null;
 			}
+
 		}
 	}
 }

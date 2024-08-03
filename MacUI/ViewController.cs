@@ -12,6 +12,7 @@ namespace GDIBuilderMac
         private CddaTrackSource _tracks;
         private GDromBuilder _builder;
         private Thread _worker;
+        private CancellationTokenSource _cancelTokenSource;
 
         public ViewController(IntPtr handle) : base(handle)
         {
@@ -24,6 +25,7 @@ namespace GDIBuilderMac
             tblCdda.DataSource = _tracks;
             pbProgress.MinValue = 0;
             pbProgress.MaxValue = 100;
+            btnCancel.Hidden = true;
 
             // Do any additional setup after loading the view.
         }
@@ -61,7 +63,17 @@ namespace GDIBuilderMac
                 {
                     foreach (NSUrl url in openPanel.Urls)
                     {
-                        _tracks.Rows.Add(new CddaItem(url.Path));
+                        if (url.Path?.EndsWith("track02.raw", StringComparison.OrdinalIgnoreCase) == true)
+                        {
+                            NSAlert dialog = NSAlert.WithMessage("A mistake was made", "OK", null, null,
+                                "This tool is only for building the high density area of a GD-ROM. You selected Track 2, which is part of the PC readable portion of the disc. " +
+                                "This file has been automatically ignored. Please read the instructions for more information.");
+                            dialog.RunModal();
+                        }
+                        else
+                        {
+                            _tracks.Rows.Add(new CddaItem(url.Path));
+                        }
                     }
                     tblCdda.ReloadData();
                 }
@@ -140,12 +152,14 @@ namespace GDIBuilderMac
                         return;
                     }
                 }
-                DisableButtons();
+
+                EnableOrDisableButtons(disable: true);
                 _builder.RawMode = (chkRawMode.State == NSCellStateValue.On);
                 _builder.ReportProgress = UpdateProgress;
                 string dataPath = txtData.Cell.Title;
                 string ipBinPath = txtIpBin.Cell.Title;
                 string outputPath = txtOutput.Cell.Title;
+                _cancelTokenSource = new CancellationTokenSource();
                 _worker = new Thread(() => DoDiscBuild(dataPath, ipBinPath, cdTracks, outputPath));
                 _worker.Start();
             }
@@ -153,6 +167,11 @@ namespace GDIBuilderMac
             {
                 NSAlert.WithMessage("Error", "OK", null, null, "Not ready to build disc. Please provide more information above.").RunModal();
             }
+        }
+
+        partial void btnCancel_Clicked(Foundation.NSObject sender)
+        {
+            _cancelTokenSource?.Cancel();
         }
 
         partial void btnDown_Clicked(Foundation.NSObject sender)
@@ -217,35 +236,51 @@ namespace GDIBuilderMac
             View.Window.Close();
         }
 
-        private void DisableButtons()
+        private void EnableOrDisableButtons(bool disable)
         {
-            btnAddCdda.Enabled = false;
-            btnAdvanced.Enabled = false;
-            btnBrowseData.Enabled = false;
-            btnBrowseIpBin.Enabled = false;
-            btnBrowseOutput.Enabled = false;
-            btnCreate.Enabled = false;
-            btnUp.Enabled = false;
-            btnDown.Enabled = false;
-            btnRemoveCdda.Enabled = false;
-            chkRawMode.Enabled = false;
+            btnAddCdda.Enabled = !disable;
+            btnAdvanced.Enabled = !disable;
+            btnBrowseData.Enabled = !disable;
+            btnBrowseIpBin.Enabled = !disable;
+            btnBrowseOutput.Enabled = !disable;
+            btnCreate.Enabled = !disable;
+            btnUp.Enabled = !disable;
+            btnDown.Enabled = !disable;
+            btnRemoveCdda.Enabled = !disable;
+            chkRawMode.Enabled = !disable;
+            
+            btnCancel.Hidden = !disable;
+            btnCancel.Enabled = disable;
         }
 
         private void DoDiscBuild(string dataDir, string ipBin, List<string> trackList, string outdir)
         {
             try
             {
-                List<DiscTrack> tracks = _builder.BuildGDROM(dataDir, ipBin, trackList, outdir);
-                InvokeOnMainThread(new Action(() =>
+                List<DiscTrack> tracks = _builder.BuildGDROM(dataDir, ipBin, trackList, outdir, _cancelTokenSource.Token);
+                if (_cancelTokenSource.IsCancellationRequested)
                 {
-                    string gdiPath = System.IO.Path.Combine(outdir, "disc.gdi");
-                    if (System.IO.File.Exists(gdiPath))
+                    _cancelTokenSource.Dispose();
+                    _cancelTokenSource = null;
+                    InvokeOnMainThread(new Action(() =>
                     {
-                        _builder.UpdateGdiFile(tracks, gdiPath);
-                    }
-                    txtResult.Cell.Title = _builder.GetGDIText(tracks);
-                    NSApplication.SharedApplication.BeginSheet(winFinished, View.Window);
-                }));
+                        EnableOrDisableButtons(disable: false);
+                        pbProgress.DoubleValue = 0;
+                    }));
+                }
+                else
+                {
+                    InvokeOnMainThread(new Action(() =>
+                    {
+                        string gdiPath = System.IO.Path.Combine(outdir, "disc.gdi");
+                        if (System.IO.File.Exists(gdiPath))
+                        {
+                            _builder.UpdateGdiFile(tracks, gdiPath);
+                        }
+                        txtResult.Cell.Title = _builder.GetGDIText(tracks);
+                        NSApplication.SharedApplication.BeginSheet(winFinished, View.Window);
+                    }));
+                }
             }
             catch (Exception ex)
             {
