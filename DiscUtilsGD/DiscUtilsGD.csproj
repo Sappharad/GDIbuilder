@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Description>Implementation of the ISO, UDF, FAT and NTFS file systems is now fairly stable. VHD, XVA, VMDK and VDI disk formats are implemented, as well as read/write Registry support. The library also includes a simple iSCSI initiator, for accessing disks via iSCSI and an NFS client implementation.</Description>
+        <AssemblyTitle>DiscUtils (for .NET and .NET Core), forked with modifications to support reading and writing GD-ROM data.</AssemblyTitle>
+        <Authors>Kenneth Bell;Quamotion;LordMike;Sappharad</Authors>
+        <PackageTags>DiscUtils;VHD;VDI;XVA;VMDK;ISO;NTFS;EXT2FS</PackageTags>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+    
+    <ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
+        <PackageReference Include="System.Security.AccessControl" Version="5.0.0" />
+    </ItemGroup>
+    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+        <PackageReference Include="System.Security.AccessControl" Version="5.0.0" />
+        <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="DiscUtils.Iso9660\Properties\**" />
+      <Compile Remove="DiscUtils.Streams\Properties\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Remove="DiscUtils.Iso9660\Properties\**" />
+      <EmbeddedResource Remove="DiscUtils.Streams\Properties\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="DiscUtils.Iso9660\Properties\**" />
+      <None Remove="DiscUtils.Streams\Properties\**" />
+    </ItemGroup>
+</Project>

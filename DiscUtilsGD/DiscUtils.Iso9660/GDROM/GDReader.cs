@@ -1,0 +1,307 @@
+using System;
+using System.IO;
+using DiscUtils.Iso9660;
+using System.Collections.Generic;
+using File = System.IO.File;
+
+namespace DiscUtils.Gdrom
+{
+    /// <summary>
+    /// Allow the reading of a GD-ROM dump by adapting the 3552 byte sectors to 2048 byte sectors
+    /// that the CDReader class expects.
+    /// </summary>
+    public class GDReader : CDReader
+    {
+        private readonly List<GDDataTrack> _data;
+        public GDReader(List<GDDataTrack> data, bool joliet = false) : base(new StreamSectorAdapter(data), joliet, true, data[0].LBA)
+        {
+            _data = data;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            foreach (var track in _data)
+            {
+                track.Data.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Reads the high density area using the track information from a GDI file.
+        /// If you want to read the low density area instead, just create a GDReader with track01.bin as the only track in the track list.
+        /// </summary>
+        /// <param name="gdiPath">The path to the GDI</param>
+        /// <returns>A GDReader for the high density files on the disc</returns>
+        public static GDReader FromGDI(string gdiPath)
+        {
+            if (!File.Exists(gdiPath))
+            {
+                throw new FileNotFoundException("The input GDI was not found or accessible.", gdiPath);
+            }
+            string[] gdiLines = File.ReadAllText(gdiPath).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            if (gdiLines.Length > 3 && int.TryParse(gdiLines[0], out int numTracks) && numTracks >= 3)
+            {
+                //This code assumes the GDI track list is sorted sequentially and there are only 1 or 2 high density data tracks.
+                var track3 = ParseTrackInfo(gdiLines[3], Path.GetDirectoryName(gdiPath));
+                if (track3 != null)
+                {
+                    if (!File.Exists(track3.Value.filename))
+                    {
+                        throw new FileNotFoundException("The GDI references a track file that does not exist!", track3.Value.filename);
+                    }
+                    List<GDDataTrack> tracks = new List<GDDataTrack>();
+                    tracks.Add(new GDDataTrack(new FileStream(track3.Value.filename, FileMode.Open, FileAccess.Read), track3.Value.lba, track3.Value.sectorSize));
+                    if (numTracks > 3)
+                    {
+                        var finalTrack = ParseTrackInfo(gdiLines[numTracks], Path.GetDirectoryName(gdiPath));
+                        if (!File.Exists(track3.Value.filename))
+                        {
+                            throw new FileNotFoundException("The GDI references a track file that does not exist!", track3.Value.filename);
+                        }
+                        if (finalTrack != null)
+                        {
+                            tracks.Add(new GDDataTrack(new FileStream(finalTrack.Value.filename, FileMode.Open, FileAccess.Read), finalTrack.Value.lba,
+                                finalTrack.Value.sectorSize));
+                        }
+                    }
+                    return new GDReader(tracks);
+                }
+            }
+            return null;
+        }
+
+        private static (string filename, uint lba, uint sectorSize)? ParseTrackInfo(string trackInfo, string sourceDir)
+        {
+            string[] pieces = trackInfo.Split(' ');
+            if (pieces.Length == 6 && uint.TryParse(pieces[1], out uint lba) && uint.TryParse(pieces[3], out uint sectorSize))
+            {
+                return (filename: Path.Combine(sourceDir, pieces[4]), lba, sectorSize);
+            }
+            return null;
+        }
+    }
+
+    public class GDDataTrack
+    {
+        internal const int ISO_SECTOR_SIZE = 2048;
+        public GDDataTrack(Stream data, uint lba, uint? sectorSize = null, uint? sectorOffset = null)
+        {
+            Data = data;
+            LBA = lba;
+            if (sectorSize.HasValue)
+            {
+                SectorSize = sectorSize.Value;
+            }
+            else if (data.Length % 2048 == 0 && data.Length % 2352 > 0)
+            {
+                //Assume 3552 unless the input is a direct multiple of 2048 and not 3552.
+                //If neither are true, the logic that tries to read the first sector will fail anyway.
+                SectorSize = 2048;
+            }
+            else
+            {
+                SectorSize = 2352;
+            }
+            if (sectorOffset.HasValue)
+            {
+                SectorOffset = sectorOffset.Value;
+            }
+            else if (SectorSize == 2352)
+            {
+                SectorOffset = 0x10;
+            }
+            else
+            {
+                SectorOffset = 0;
+            }
+            if (SectorSize < ISO_SECTOR_SIZE)
+            {
+                throw new InvalidDataException("What are you doing? An ISO data sector can't be under 2048 bytes.");
+            }
+            DataLength = data.Length * ISO_SECTOR_SIZE / SectorSize;
+        }
+        public Stream Data { get; set; }
+        public uint LBA { get; set; }
+        public long DataStart => LBA * ISO_SECTOR_SIZE;
+        public long DataLength { get; set; }
+        public long DataEnd => DataStart + DataLength;
+        public uint SectorSize { get; set; }
+        public uint SectorOffset { get; set; }
+        
+        public long Position
+        {
+            get => DataStart + (((Data.Position - SectorOffset) / SectorSize) * ISO_SECTOR_SIZE) + ((Data.Position - SectorOffset) % SectorSize);
+            set => Data.Position = ((value - DataStart) / ISO_SECTOR_SIZE) * SectorSize + ((value - DataStart) % ISO_SECTOR_SIZE) + SectorOffset;
+        }
+
+        public long Seek(long offset, SeekOrigin origin)
+        {
+            if (origin == SeekOrigin.Begin)
+            {
+                offset -= DataStart;
+            }
+            else if (origin == SeekOrigin.End)
+            {
+                offset += DataStart;
+            }
+            long actualOffset = ((offset / ISO_SECTOR_SIZE) * SectorSize) + (offset % ISO_SECTOR_SIZE) + SectorOffset;
+            Data.Seek(actualOffset, origin);
+            return Position;
+        }
+    }
+
+    internal class StreamSectorAdapter : Stream
+    {
+        private readonly List<GDDataTrack> _input;
+        private GDDataTrack _currentTrack;
+        public StreamSectorAdapter(List<GDDataTrack> input)
+        {
+            _input = input;
+            if (input.Count == 0)
+            {
+                throw new ArgumentException("You need to provide tracks in order to read them!");
+            }
+            _currentTrack = _input[0];
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            foreach (GDDataTrack track in _input)
+            {
+                track.Data.Dispose();
+            }
+        }
+
+        public override void Close()
+        {
+            foreach (GDDataTrack track in _input)
+            {
+                track.Data.Close();
+            }
+        }
+
+        public override void Flush()
+        {
+            _currentTrack.Data.Flush();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int remaining = count;
+            int totalBytesRead = 0;
+            
+            while (remaining > 0)
+            {
+                int sectorOffset = _currentTrack != null ? (int)((_currentTrack.Data.Position - _currentTrack.SectorOffset) % _currentTrack.SectorSize) : 0;
+                int bytesToRead = Math.Min(GDDataTrack.ISO_SECTOR_SIZE - sectorOffset, remaining);
+                int bytesRead = bytesToRead;
+                if (_currentTrack != null)
+                {
+                    bytesRead = _currentTrack.Data.Read(buffer, offset, bytesToRead);
+                }
+                else
+                {
+                    Array.Clear(buffer, offset, remaining);
+                }
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+
+                totalBytesRead += bytesRead;
+                offset += bytesRead;
+                remaining -= bytesRead;
+                if (_currentTrack?.SectorSize > GDDataTrack.ISO_SECTOR_SIZE)
+                {
+                    _currentTrack.Data.Seek(_currentTrack.SectorSize - GDDataTrack.ISO_SECTOR_SIZE, SeekOrigin.Current);
+                }
+                if (_currentTrack != null && _currentTrack.Position == _currentTrack.DataEnd)
+                {
+                    AdjustTracking(_currentTrack.Position);
+                }
+                else if (_currentTrack == null)
+                {
+                    Position += bytesRead;
+                }
+            }
+
+            return totalBytesRead;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            long nextPosition = Position;
+            switch (origin)
+            {
+                case SeekOrigin.Begin:
+                    nextPosition = offset;
+                    break;
+                case SeekOrigin.Current:
+                    nextPosition += offset;
+                    break;
+                case SeekOrigin.End:
+                    nextPosition = _input[_input.Count - 1].DataEnd - offset;
+                    break;
+            }
+            if (nextPosition >= _currentTrack?.DataStart && nextPosition < _currentTrack.DataEnd)
+            {
+                return _currentTrack.Seek(offset, origin);
+            }
+            AdjustTracking(nextPosition);
+            _currentTrack?.Seek(nextPosition, SeekOrigin.Begin);
+            return Position;
+        }
+
+        private void AdjustTracking(long position)
+        {
+            if (position < _currentTrack?.DataStart && position >= _currentTrack?.DataEnd)
+            {
+                foreach (GDDataTrack track in _input)
+                {
+                    if (position >= track.DataStart && position < track.DataEnd)
+                    {
+                        _currentTrack = track;
+                        return;
+                    }
+                }
+                _currentTrack = null;
+                _unreachablePosition = position;
+            }
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new InvalidOperationException("This stream is read-only. You cannot change the length!");
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new InvalidOperationException("This stream is read-only. You cannot write to it!");
+        }
+
+        public override bool CanRead => _currentTrack.Data.CanRead;
+        public override bool CanSeek => _currentTrack.Data.CanSeek;
+        public override bool CanWrite => false;
+        public override long Length => _input[_input.Count - 1].DataEnd;
+
+        private long _unreachablePosition;
+        public override long Position
+        {
+            get => _currentTrack?.Position ?? _unreachablePosition;
+            set
+            {
+                AdjustTracking(value);
+                if (value >= _currentTrack?.DataStart && value < _currentTrack?.DataEnd)
+                {
+                    _currentTrack.Position = value;
+                }
+                else
+                {
+                    _unreachablePosition = value;
+                }
+            }
+        }
+    }
+}
