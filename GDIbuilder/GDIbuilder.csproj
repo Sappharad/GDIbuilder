@@ -73,9 +73,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="DiscUtils\DiscUtils.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="BlankMedia.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -84,5 +81,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DiscUtilsGD\DiscUtilsGD.csproj" />
   </ItemGroup>
 </Project>
