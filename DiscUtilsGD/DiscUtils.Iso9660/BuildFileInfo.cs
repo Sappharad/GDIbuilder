@@ -32,7 +32,7 @@ namespace DiscUtils.Iso9660
     /// <summary>
     /// Represents a file that will be built into the ISO image.
     /// </summary>
-    public sealed class BuildFileInfo : BuildDirectoryMember
+    public sealed class BuildFileInfo : BuildDirectoryMember, IDisposable
     {
         private readonly byte[] _contentData;
         private readonly string _contentPath;
@@ -63,6 +63,11 @@ namespace DiscUtils.Iso9660
             Parent = parent;
             _contentStream = source;
             _contentSize = _contentStream.Length;
+        }
+
+        public void Dispose()
+        {
+            _contentStream?.Dispose();
         }
 
         /// <summary>
@@ -99,7 +104,7 @@ namespace DiscUtils.Iso9660
             }
         }
 
-        private static string MakeShortFileName(string longName, BuildDirectoryInfo dir)
+        internal static string MakeShortFileName(string longName, BuildDirectoryInfo dir)
         {
             if (IsoUtilities.IsValidFileName(longName) && longName.Contains(";"))
             {

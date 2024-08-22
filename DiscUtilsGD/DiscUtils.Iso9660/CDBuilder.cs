@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using DiscUtils.Streams;
 
@@ -277,6 +278,7 @@ namespace DiscUtils.Iso9660
         /// </summary>
         /// <param name="name">The name of the file on the ISO image.</param>
         /// <param name="sourcePath">The name of the file on disk.</param>
+        /// <param name="replaceExisting">Replace this file if it already exists</param>
         /// <returns>The object representing this file.</returns>
         /// <remarks>
         /// The name is the full path to the file, for example:
@@ -286,7 +288,7 @@ namespace DiscUtils.Iso9660
         /// <para>Note the version number at the end of the file name is optional, if not
         /// specified the default of 1 will be used.</para>
         /// </remarks>
-        public BuildFileInfo AddFile(string name, string sourcePath)
+        public BuildFileInfo AddFile(string name, string sourcePath, bool replaceExisting = false)
         {
             string[] nameElements = name.Split(new[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
             BuildDirectoryInfo dir = GetDirectory(nameElements, nameElements.Length - 1, true);
@@ -294,7 +296,24 @@ namespace DiscUtils.Iso9660
             BuildDirectoryMember existing;
             if (dir.TryGetMember(nameElements[nameElements.Length - 1], out existing))
             {
-                throw new IOException("File already exists");
+                if (replaceExisting)
+                {
+                    BuildFileInfo replacement = new BuildFileInfo(nameElements[nameElements.Length - 1], dir, sourcePath);
+                    int found = _files.FindIndex(file => file.Name == replacement.Name && file.Parent == dir);
+                    if (found >= 0)
+                    {
+                        BuildFileInfo original = _files[found];
+                        original.Dispose();
+                        _files.RemoveAt(found);
+                        _files.Insert(found, replacement);
+                        return replacement;
+                    }
+                    throw new Exception("Unable to overwrite existing file because the original couldn't be found.");
+                }
+                else
+                {
+                    throw new IOException("File already exists");
+                }
             }
             BuildFileInfo fi = new BuildFileInfo(nameElements[nameElements.Length - 1], dir, sourcePath);
             _files.Add(fi);
@@ -307,6 +326,7 @@ namespace DiscUtils.Iso9660
         /// </summary>
         /// <param name="name">The name of the file on the ISO image.</param>
         /// <param name="source">The contents of the file.</param>
+        /// <param name="replaceExisting">Replace this file if it already exists</param>
         /// <returns>The object representing this file.</returns>
         /// <remarks>
         /// The name is the full path to the file, for example:
@@ -316,7 +336,7 @@ namespace DiscUtils.Iso9660
         /// <para>Note the version number at the end of the file name is optional, if not
         /// specified the default of 1 will be used.</para>
         /// </remarks>
-        public BuildFileInfo AddFile(string name, Stream source)
+        public BuildFileInfo AddFile(string name, Stream source, bool replaceExisting = false)
         {
             if (!source.CanSeek)
             {
@@ -326,15 +346,40 @@ namespace DiscUtils.Iso9660
             string[] nameElements = name.Split(new[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
             BuildDirectoryInfo dir = GetDirectory(nameElements, nameElements.Length - 1, true);
 
-            BuildDirectoryMember existing;
-            if (dir.TryGetMember(nameElements[nameElements.Length - 1], out existing))
+            if (dir.TryGetMember(nameElements[nameElements.Length - 1], out BuildDirectoryMember existing))
             {
-                throw new IOException("File already exists");
+                if (replaceExisting)
+                {
+                    BuildFileInfo replacement = new BuildFileInfo(nameElements[nameElements.Length - 1], dir, source);
+                    int found = _files.FindIndex(file => file.Name == replacement.Name && file.Parent == dir);
+                    if (found >= 0)
+                    {
+                        BuildFileInfo original = _files[found];
+                        original.Dispose();
+                        _files.RemoveAt(found);
+                        _files.Insert(found, replacement);
+                        return replacement;
+                    }
+                    throw new Exception("Unable to overwrite existing file because the original couldn't be found.");
+                }
+                else
+                {
+                    throw new IOException("File already exists");
+                }
             }
             BuildFileInfo fi = new BuildFileInfo(nameElements[nameElements.Length - 1], dir, source);
             _files.Add(fi);
             dir.Add(fi);
             return fi;
+        }
+
+        public void MoveToEnd(BuildFileInfo file)
+        {
+            if (_files.Contains(file))
+            {
+                _files.Remove(file);
+                _files.Add(file);
+            }
         }
         
         internal long FirstDataExtent

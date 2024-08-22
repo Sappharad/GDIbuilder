@@ -1,27 +1,56 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using DiscUtils.Raw;
-using DiscUtils.Iso9660;
-using System.Collections.Generic;
 using System.Threading;
 using DiscUtils.Streams;
+using DiscUtils.Iso9660;
 using File = System.IO.File;
+using System.Collections.Generic;
 
 namespace DiscUtils.Gdrom
 {
     public class GDromBuilder
     {
+        #region Constants
         const int DATA_SECTOR_SIZE = 2048;
         const int RAW_SECTOR_SIZE = 2352;
         const int GD_START_LBA = 45000;
         const int GD_END_LBA = 549150;
-        public string VolumeIdentifier { get; set; }
-        public string SystemIdentifier { get; set; }
-        public string VolumeSetIdentifier { get; set; }
-        public string PublisherIdentifier { get; set; }
-        public string DataPreparerIdentifier { get; set; }
-        public string ApplicationIdentifier { get; set; }
+        #endregion
+        #region Properties
+        public string VolumeIdentifier
+        {
+            get => _builder.VolumeIdentifier;
+            set => _builder.VolumeIdentifier = value;
+        }
+        public string SystemIdentifier
+        {
+            get => _builder.SystemIdentifier; 
+            set => _builder.SystemIdentifier = value;
+        }
+        public string VolumeSetIdentifier
+        {
+            get => _builder.VolumeSetIdentifier; 
+            set => _builder.VolumeSetIdentifier = value;
+        }
+
+        public string PublisherIdentifier
+        {
+            get => _builder.PublisherIdentifier; 
+            set => _builder.PublisherIdentifier = value;
+        }
+
+        public string DataPreparerIdentifier
+        {
+            get => _builder.DataPreparerIdentifier; 
+            set => _builder.DataPreparerIdentifier = value;
+        }
+
+        public string ApplicationIdentifier
+        {
+            get => _builder.ApplicationIdentifier; 
+            set => _builder.ApplicationIdentifier = value;
+        }
         private int _lastProgress;
         public delegate void OnReportProgress(int percent);
         public OnReportProgress ReportProgress { get; set; }
@@ -29,8 +58,16 @@ namespace DiscUtils.Gdrom
         public string LastTrackPath { get; set; }
         public bool RawMode { get; set; }
         public bool TruncateData { get; set; }
+        #endregion
+        #region Private Fields
+        private byte[] _ipbinData = new byte[0x8000];
+        private readonly string _bootBin;
+        private BuildFileInfo _bootBinFile = null;
+        private List<string> _cddaPaths;
+        private readonly CDBuilder _builder = new CDBuilder();
+        #endregion
 
-        public GDromBuilder()
+        private GDromBuilder()
         {
             VolumeIdentifier = "DREAMCAST";
             SystemIdentifier = string.Empty;
@@ -40,80 +77,89 @@ namespace DiscUtils.Gdrom
             ApplicationIdentifier = string.Empty;
         }
 
-        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda, CancellationToken? token = null)
+        public GDromBuilder(string ipBinPath, List<string> cddaPaths) : this()
         {
-            string bootBin;
-            byte[] ipbinData = new byte[0x8000];
-            CDBuilder builder = new CDBuilder();
-            builder.VolumeIdentifier = VolumeIdentifier;
-            builder.SystemIdentifier = SystemIdentifier;
-            builder.VolumeSetIdentifier = VolumeSetIdentifier;
-            builder.PublisherIdentifier = PublisherIdentifier;
-            builder.DataPreparerIdentifier = DataPreparerIdentifier;
-            builder.ApplicationIdentifier = ApplicationIdentifier;
-            builder.UseJoliet = false; //A stupid default, mkisofs won't do this by default.
-            builder.LBAoffset = GD_START_LBA;
-            builder.EndSector = GD_END_LBA;
+            using (FileStream ipfs = new FileStream(ipBinPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                LoadIPbin(ipfs);
+            }
+            _bootBin = GetBootBin();
+            _cddaPaths = cddaPaths;
+        }
+        public GDromBuilder(Stream ipBinStream, List<string> cddaPaths) : this()
+        {
+            LoadIPbin(ipBinStream);
+            _bootBin = GetBootBin();
+            _cddaPaths = cddaPaths;
+        }
+        public GDromBuilder(byte[] ipBin, List<string> cddaPaths) : this()
+        {
+            _ipbinData = ipBin;
+            _bootBin = GetBootBin();
+            _cddaPaths = cddaPaths;
+        }
 
-            using (FileStream ipfs = new FileStream(ipbin, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                if (ipfs.Length != ipbinData.Length)
-                {
-                    throw new Exception("IP.BIN is the wrong size. Possibly the wrong file? Cannot continue.");
-                }
-                bootBin = GetBootBin(ipfs);
-                ipfs.Seek(0, SeekOrigin.Begin);
-                if (ipfs.Read(ipbinData, 0, ipbinData.Length) < ipbinData.Length)
-                {
-                    throw new Exception("Unable to read the entire IP.BIN file. Cannot continue.");
-                }
-            }
+
+        public List<DiscTrack> BuildGDROM(CancellationToken? token = null)
+        {
+            _builder.UseJoliet = false; //A stupid default, mkisofs won't do this by default.
+            _builder.LBAoffset = GD_START_LBA;
+            _builder.EndSector = GD_END_LBA;
+
             List<DiscTrack> retval = new List<DiscTrack>();
-            if (cdda != null && cdda.Count > 0)
+            if (_cddaPaths != null && _cddaPaths.Count > 0)
             {
-                retval = ReadCDDA(cdda);
+                retval = ReadCDDA(_cddaPaths);
             }
-            DirectoryInfo di = new DirectoryInfo(data);
-            PopulateFromFolder(builder, di, di.FullName, bootBin);
+            if (_bootBinFile != null)
+            {
+                _builder.MoveToEnd(_bootBinFile);
+                long sectorSize = RoundUp(_bootBinFile.GetDataSize(Encoding.ASCII), DATA_SECTOR_SIZE);
+                _builder.LastFileStartSector = (uint)(GD_END_LBA - 150 - (sectorSize / DATA_SECTOR_SIZE));
+            }
+            else
+            {
+                throw new InvalidOperationException($"The binary that the supplied IP.BIN expects to startup, {_bootBin}, was not added to the disc!");
+            }
             if (token?.IsCancellationRequested == true) return null;
             
-            using (BuiltStream isoStream = (BuiltStream)builder.Build())
+            using (BuiltStream isoStream = (BuiltStream)_builder.Build())
             {
                 _lastProgress = 0;
                 if (retval.Count > 0 || (TruncateData && !string.IsNullOrEmpty(LastTrackPath)))
                 {
                     if (RawMode)
                     {
-                        ExportMultiTrackRaw(isoStream, ipbinData, retval, token);
+                        ExportMultiTrackRaw(isoStream, retval, token);
                     }
                     else
                     {
-                        ExportMultiTrack(isoStream, ipbinData, retval, token);
+                        ExportMultiTrack(isoStream, retval, token);
                     }
                 }
                 else
                 {
                     if (RawMode)
                     {
-                        ExportSingleTrackRaw(isoStream, ipbinData, retval, token);
+                        ExportSingleTrackRaw(isoStream, retval, token);
                     }
                     else
                     {
-                        ExportSingleTrack(isoStream, ipbinData, retval, token);
+                        ExportSingleTrack(isoStream, retval, token);
                     }
                 }
             }
             return retval;
         }
 
-        public List<DiscTrack> BuildGDROM(string data, string ipbin, List<string> cdda, string outDir, CancellationToken? token = null)
+        public List<DiscTrack> BuildGDROM(string outDir, CancellationToken? token = null)
         {
             Track03Path = Path.Combine(outDir, "track03.bin");
-            LastTrackPath = Path.Combine(outDir, GetLastTrackName(cdda?.Count ?? 0));
-            return BuildGDROM(data, ipbin, cdda, token);
+            LastTrackPath = Path.Combine(outDir, GetLastTrackName(_cddaPaths?.Count ?? 0));
+            return BuildGDROM(token);
         }
 
-        private void ExportSingleTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks, CancellationToken? token)
+        private void ExportSingleTrack(BuiltStream isoStream, List<DiscTrack> tracks, CancellationToken? token)
         {
             long currentBytes = 0;
             long totalBytes = isoStream.Length;
@@ -125,12 +171,12 @@ namespace DiscUtils.Gdrom
             track3.Type = 4;
             track3.FileSize = (GD_END_LBA - GD_START_LBA) * DATA_SECTOR_SIZE;
             tracks.Add(track3);
-            UpdateIPBIN(ipbinData, tracks);
+            UpdateIPBIN(_ipbinData, tracks);
             using (FileStream destStream = new FileStream(Track03Path, FileMode.Create, FileAccess.Write))
             {
-                destStream.Write(ipbinData, 0, ipbinData.Length);
-                isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
-                currentBytes += ipbinData.Length;
+                destStream.Write(_ipbinData, 0, _ipbinData.Length);
+                isoStream.Seek(_ipbinData.Length, SeekOrigin.Begin);
+                currentBytes += _ipbinData.Length;
 
                 byte[] buffer = new byte[64 * 1024];
                 int numRead = isoStream.Read(buffer, 0, buffer.Length);
@@ -158,7 +204,7 @@ namespace DiscUtils.Gdrom
         /// <summary>
         /// Separate raw logic to maintain performance of the 2048 version
         /// </summary>
-        private void ExportSingleTrackRaw(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks, CancellationToken? token)
+        private void ExportSingleTrackRaw(BuiltStream isoStream, List<DiscTrack> tracks, CancellationToken? token)
         {
             long currentBytes = 0;
             long totalBytes = isoStream.Length;
@@ -170,20 +216,20 @@ namespace DiscUtils.Gdrom
             track3.Type = 4;
             track3.FileSize = (GD_END_LBA - GD_START_LBA) * DATA_SECTOR_SIZE;
             tracks.Add(track3);
-            UpdateIPBIN(ipbinData, tracks);
+            UpdateIPBIN(_ipbinData, tracks);
             using (FileStream destStream = new FileStream(Track03Path, FileMode.Create, FileAccess.Write))
             {
                 int currentLBA = GD_START_LBA;
                 byte[] buffer = new byte[DATA_SECTOR_SIZE];
                 byte[] resultSector;
-                for (int i = 0; i < ipbinData.Length; i += buffer.Length)
+                for (int i = 0; i < _ipbinData.Length; i += buffer.Length)
                 {
-                    Array.Copy(ipbinData, i, buffer, 0, buffer.Length);
+                    Array.Copy(_ipbinData, i, buffer, 0, buffer.Length);
                     resultSector = IsoUtilities.ConvertSectorToRawMode1(buffer, currentLBA++);
                     destStream.Write(resultSector, 0, resultSector.Length);
                     currentBytes += 2048;
                 }
-                isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
+                isoStream.Seek(_ipbinData.Length, SeekOrigin.Begin);
 
                 int numRead = isoStream.Read(buffer, 0, buffer.Length);
                 while (numRead != 0)
@@ -222,7 +268,7 @@ namespace DiscUtils.Gdrom
             }
         }
         
-        private void ExportMultiTrack(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks, CancellationToken? token)
+        private void ExportMultiTrack(BuiltStream isoStream, List<DiscTrack> tracks, CancellationToken? token)
         {
             //There is a 150 sector gap before and after the CDDA
             long lastHeaderEnd = 0;
@@ -269,7 +315,7 @@ namespace DiscUtils.Gdrom
             lastTrack.LBA = (uint)(GD_START_LBA + firstFileStart);
             lastTrack.Type = 4;
             tracks.Add(lastTrack);
-            UpdateIPBIN(ipbinData, tracks);
+            UpdateIPBIN(_ipbinData, tracks);
 
             long currentBytes = 0;
             long totalBytes = isoStream.Length;
@@ -277,9 +323,9 @@ namespace DiscUtils.Gdrom
 
             using (FileStream destStream = new FileStream(Track03Path, FileMode.Create, FileAccess.Write))
             {
-                destStream.Write(ipbinData, 0, ipbinData.Length);
-                isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
-                long bytesWritten = (long)ipbinData.Length;
+                destStream.Write(_ipbinData, 0, _ipbinData.Length);
+                isoStream.Seek(_ipbinData.Length, SeekOrigin.Begin);
+                long bytesWritten = (long)_ipbinData.Length;
 
                 byte[] buffer = new byte[DATA_SECTOR_SIZE];
                 int numRead = isoStream.Read(buffer, 0, buffer.Length);
@@ -332,7 +378,7 @@ namespace DiscUtils.Gdrom
             }
         }
 
-        private void ExportMultiTrackRaw(BuiltStream isoStream, byte[] ipbinData, List<DiscTrack> tracks, CancellationToken? token)
+        private void ExportMultiTrackRaw(BuiltStream isoStream, List<DiscTrack> tracks, CancellationToken? token)
         {
             //There is a 150 sector gap before and after the CDDA
             long lastHeaderEnd = 0;
@@ -379,7 +425,7 @@ namespace DiscUtils.Gdrom
             lastTrack.LBA = (uint)(GD_START_LBA + firstFileStart);
             lastTrack.Type = 4;
             tracks.Add(lastTrack);
-            UpdateIPBIN(ipbinData, tracks);
+            UpdateIPBIN(_ipbinData, tracks);
 
             long currentBytes = 0;
             long totalBytes = isoStream.Length;
@@ -390,15 +436,15 @@ namespace DiscUtils.Gdrom
             {
                 byte[] buffer = new byte[DATA_SECTOR_SIZE];
                 byte[] resultSector;
-                for (int i = 0; i < ipbinData.Length; i += buffer.Length)
+                for (int i = 0; i < _ipbinData.Length; i += buffer.Length)
                 {
-                    Array.Copy(ipbinData, i, buffer, 0, buffer.Length);
+                    Array.Copy(_ipbinData, i, buffer, 0, buffer.Length);
                     resultSector = IsoUtilities.ConvertSectorToRawMode1(buffer, currentLBA++);
                     destStream.Write(resultSector, 0, resultSector.Length);
                     currentBytes += DATA_SECTOR_SIZE;
                 }
-                isoStream.Seek(ipbinData.Length, SeekOrigin.Begin);
-                long bytesWritten = (long)ipbinData.Length;
+                isoStream.Seek(_ipbinData.Length, SeekOrigin.Begin);
+                long bytesWritten = (long)_ipbinData.Length;
 
                 int numRead = isoStream.Read(buffer, 0, buffer.Length);
                 while (numRead != 0 && bytesWritten < track3.FileSize)
@@ -480,6 +526,19 @@ namespace DiscUtils.Gdrom
                 }
             }
         }
+        
+        private void LoadIPbin(Stream ipfs)
+        {
+            if (ipfs.Length != _ipbinData.Length)
+            {
+                throw new Exception("IP.BIN is the wrong size. Possibly the wrong file? Cannot continue.");
+            }
+            ipfs.Seek(0, SeekOrigin.Begin);
+            if (ipfs.Read(_ipbinData, 0, _ipbinData.Length) < _ipbinData.Length)
+            {
+                throw new Exception("Unable to read the entire IP.BIN file. Cannot continue.");
+            }
+        }
 
         private void UpdateIPBIN(byte[] ipbinData, List<DiscTrack> tracks)
         {
@@ -502,7 +561,7 @@ namespace DiscUtils.Gdrom
             }
         }
 
-        public string CheckOutputExists(List<string> cdda, string output)
+        public static string CheckOutputExists(List<string> cdda, string output)
         {
             List<string> filesToCheck = new List<string>();
             filesToCheck.Add("track03.bin");
@@ -580,7 +639,7 @@ namespace DiscUtils.Gdrom
             File.WriteAllText(gdiPath, sb.ToString());
         }
 
-        private string GetLastTrackName(int cddaTracks)
+        private static string GetLastTrackName(int cddaTracks)
         {
             return "track" + (cddaTracks + 4).ToString("00") + ".bin";
         }
@@ -604,36 +663,76 @@ namespace DiscUtils.Gdrom
             return retval;
         }
 
-        private string GetBootBin(FileStream ipfs)
+        private string GetBootBin()
         {            
             byte[] name = new byte[16];
-            ipfs.Seek(0x60, SeekOrigin.Begin);
-            ipfs.Read(name, 0, name.Length);
-            return System.Text.Encoding.ASCII.GetString(name).Trim();
+            Array.Copy(_ipbinData, 0x60, name, 0, name.Length);
+            string actualFilename = Encoding.ASCII.GetString(name).Trim();
+            return BuildFileInfo.MakeShortFileName(actualFilename, null);
         }
 
-        private void PopulateFromFolder(CDBuilder builder, DirectoryInfo di, string basePath, string bootBin, CancellationToken? token = null)
+        public void ImportFolder(string path, string intoDiscPath = "", bool allowOverwrite = false, CancellationToken? token = null)
         {
-            FileInfo bootBinFile = null;
+            DirectoryInfo di = new DirectoryInfo(path);
+            if (intoDiscPath == Path.DirectorySeparatorChar.ToString())
+            {
+                intoDiscPath = string.Empty;
+            }
+            PopulateFromFolder(di, di.FullName, intoDiscPath, allowOverwrite, token);
+        }
+
+        public BuildDirectoryInfo CreateDirectory(string atDiscPath)
+        {
+            return _builder.AddDirectory(atDiscPath);
+        }
+
+        public BuildFileInfo ImportFile(string path, string atDiscPath = "", bool allowOverwrite = false)
+        {
+            FileInfo fi = new FileInfo(path);
+            if (atDiscPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                atDiscPath += fi.Name;
+            }
+            BuildFileInfo fileInfo = _builder.AddFile(atDiscPath, fi.FullName, allowOverwrite);
+            if (IsBootBin(fileInfo))
+            {
+                _bootBinFile = fileInfo;
+            }
+            return fileInfo;
+        }
+
+        public BuildFileInfo ImportFile(Stream fileData, string atDiscPath, bool allowOverwrite = false)
+        {
+            BuildFileInfo fileInfo = _builder.AddFile(atDiscPath, fileData, allowOverwrite);
+            if (IsBootBin(fileInfo))
+            {
+                _bootBinFile = fileInfo;
+            }
+            return fileInfo;
+        }
+
+        private void PopulateFromFolder(DirectoryInfo di, string basePath, string intoDiscPath, bool allowOverwrite, CancellationToken? token = null)
+        {
             FileInfo[] folderFiles = di.GetFiles();
             //Add directory first, so we can set the creation time correctly.
-            string localDirPath = di.FullName.Substring(basePath.Length);
+            string localDirPath = intoDiscPath + di.FullName.Substring(basePath.Length);
             if (localDirPath.Length > 1)
             {
                 //Add directory first, so it has the correct creation time.
-                BuildDirectoryInfo dir = builder.AddDirectory(localDirPath);
-                dir.CreationTime = di.CreationTimeUtc;
+                BuildDirectoryInfo dir = _builder.AddDirectory(localDirPath);
+                if (di.CreationTimeUtc < dir.CreationTime)
+                {
+                    //Oldest creation date wins. Applicable if this is a newly added directory, or if we are combining two copies of the same folder.
+                    dir.CreationTime = di.CreationTimeUtc;
+                }
             }
             foreach (FileInfo file in folderFiles)
             {
-                string filePath = file.FullName.Substring(basePath.Length);
-                if (bootBin != null && file.Name.Equals(bootBin, StringComparison.OrdinalIgnoreCase))
+                string filePath = intoDiscPath + file.FullName.Substring(basePath.Length);
+                var fileEntry = _builder.AddFile(filePath, file.FullName, allowOverwrite);
+                if (IsBootBin(fileEntry))
                 {
-                    bootBinFile = file; //Ignore this for now, we want it last
-                }
-                else
-                {
-                    builder.AddFile(filePath, file.FullName);
+                    _bootBinFile = fileEntry;
                 }
             }
             if (token?.IsCancellationRequested == true)
@@ -643,25 +742,18 @@ namespace DiscUtils.Gdrom
 
             foreach (DirectoryInfo dir in di.GetDirectories())
             {
-                PopulateFromFolder(builder, dir, basePath, null);
-            }
-
-            if (bootBinFile != null && bootBin != null)
-            {
-                builder.AddFile(bootBin, bootBinFile.FullName);
-                long sectorSize = RoundUp(bootBinFile.Length, DATA_SECTOR_SIZE);
-                builder.LastFileStartSector = (uint)(GD_END_LBA - 150 - (sectorSize / DATA_SECTOR_SIZE));
-            }
-            else if (bootBin != null)
-            {
-                //User doesn't know what they're doing and gave us bad data.
-                throw new FileNotFoundException($"IP.BIN requires the boot file {bootBin} which was not found in the data directory.");
+                PopulateFromFolder(dir, basePath, intoDiscPath, allowOverwrite, token);
             }
         }
         
         private long RoundUp(long value, long unit)
         {
             return ((value + (unit - 1)) / unit) * unit;
+        }
+
+        private bool IsBootBin(BuildFileInfo bfi)
+        {
+            return bfi.Parent.HierarchyDepth == 0 && bfi.Name.Equals(_bootBin, StringComparison.OrdinalIgnoreCase);
         }
     }
 

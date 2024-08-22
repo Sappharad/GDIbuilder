@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using DiscUtils.Gdrom;
 using System.IO;
+using DiscUtils.Gdrom;
+using System.Collections.Generic;
 
 namespace buildgdi
 {
@@ -28,10 +26,11 @@ namespace buildgdi
             {
                 return;
             }
-            GDromBuilder builder = new GDromBuilder();
+            GDromBuilder builder = new GDromBuilder(ipBin, cdda);
             builder.ReportProgress += ProgressReport;
             builder.RawMode = HasArgument("-raw", args);
             builder.TruncateData = truncate;
+            builder.ImportFolder(data);
             if (volume != null)
             {
                 builder.VolumeIdentifier = volume;
@@ -45,11 +44,11 @@ namespace buildgdi
                 {
                     builder.LastTrackPath = Path.GetFullPath(outPath[1]);
                 }
-                tracks = builder.BuildGDROM(data, ipBin, cdda);
+                tracks = builder.BuildGDROM();
             }
             else
             {
-                tracks = builder.BuildGDROM(data, ipBin, cdda, outPath[0]);
+                tracks = builder.BuildGDROM(outPath[0]);
             }
             Console.WriteLine(" Done!");
             if (gdiPath != null)

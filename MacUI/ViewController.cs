@@ -3,6 +3,7 @@ using AppKit;
 using Foundation;
 using DiscUtils.Gdrom;
 using System.Threading;
+using DiscUtils.Iso9660;
 using System.Collections.Generic;
 
 namespace GDIBuilderMac
@@ -13,6 +14,13 @@ namespace GDIBuilderMac
         private GDromBuilder _builder;
         private Thread _worker;
         private CancellationTokenSource _cancelTokenSource;
+        private string _volumeIdentifier = "DREAMCAST";
+        private string _systemIdentifier = string.Empty;
+        private string _volumeSetIdentifier = string.Empty;
+        private string _publisherIdentifier = string.Empty;
+        private string _dataPreparerIdentifier = string.Empty;
+        private string _applicationIdentifier = string.Empty;
+        private bool _truncateData = false;
 
         public ViewController(IntPtr handle) : base(handle)
         {
@@ -47,7 +55,6 @@ namespace GDIBuilderMac
         void Initialize()
         {
             _tracks = new CddaTrackSource();
-            _builder = new GDromBuilder();
         }
 
         partial void btnAddCdda_Clicked(Foundation.NSObject sender)
@@ -82,13 +89,13 @@ namespace GDIBuilderMac
 
         partial void btnAdvanced_Clicked(Foundation.NSObject sender)
         {
-            txtVolumeId.Cell.Title = _builder.VolumeIdentifier;
-            txtSystemId.Cell.Title = _builder.SystemIdentifier;
-            txtVolSetId.Cell.Title = _builder.VolumeSetIdentifier;
-            txtPublisherId.Cell.Title = _builder.PublisherIdentifier;
-            txtDataPreparer.Cell.Title = _builder.DataPreparerIdentifier;
-            txtApplicationId.Cell.Title = _builder.ApplicationIdentifier;
-            chkTruncateMode.State = (_builder.TruncateData) ? NSCellStateValue.On : NSCellStateValue.Off;
+            txtVolumeId.Cell.Title = _volumeIdentifier;
+            txtSystemId.Cell.Title = _systemIdentifier;
+            txtVolSetId.Cell.Title = _volumeSetIdentifier;
+            txtPublisherId.Cell.Title = _publisherIdentifier;
+            txtDataPreparer.Cell.Title = _dataPreparerIdentifier;
+            txtApplicationId.Cell.Title = _applicationIdentifier;
+            chkTruncateMode.State = (_truncateData) ? NSCellStateValue.On : NSCellStateValue.Off;
 
             NSApplication.SharedApplication.BeginSheet(winAdvanced, View.Window);
         }
@@ -143,7 +150,7 @@ namespace GDIBuilderMac
                 {
                     cdTracks.Add(lvi.FilePath);
                 }
-                string checkMsg = _builder.CheckOutputExists(cdTracks, txtOutput.Cell.Title);
+                string checkMsg = GDromBuilder.CheckOutputExists(cdTracks, txtOutput.Cell.Title);
                 if (checkMsg != null)
                 {
                     NSAlert dialog = NSAlert.WithMessage("Warning", "No", "Yes", null, checkMsg);
@@ -154,13 +161,23 @@ namespace GDIBuilderMac
                 }
 
                 EnableOrDisableButtons(disable: true);
-                _builder.RawMode = (chkRawMode.State == NSCellStateValue.On);
-                _builder.ReportProgress = UpdateProgress;
                 string dataPath = txtData.Cell.Title;
                 string ipBinPath = txtIpBin.Cell.Title;
                 string outputPath = txtOutput.Cell.Title;
+                _builder = new GDromBuilder(ipBinPath, cdTracks)
+                {
+                    VolumeIdentifier = _volumeIdentifier,
+                    SystemIdentifier = _systemIdentifier,
+                    VolumeSetIdentifier = _volumeSetIdentifier,
+                    PublisherIdentifier = _publisherIdentifier,
+                    DataPreparerIdentifier = _dataPreparerIdentifier,
+                    ApplicationIdentifier = _applicationIdentifier,
+                    TruncateData = (chkTruncateMode.State == NSCellStateValue.On),
+                    RawMode = (chkRawMode.State == NSCellStateValue.On),
+                    ReportProgress = UpdateProgress
+                };
                 _cancelTokenSource = new CancellationTokenSource();
-                _worker = new Thread(() => DoDiscBuild(dataPath, ipBinPath, cdTracks, outputPath));
+                _worker = new Thread(() => DoDiscBuild(dataPath, outputPath));
                 _worker.Start();
             }
             else
@@ -217,13 +234,13 @@ namespace GDIBuilderMac
 
         partial void btnAdvancedOk_Clicked(Foundation.NSObject sender)
         {
-            _builder.VolumeIdentifier = txtVolumeId.Cell.Title;
-            _builder.SystemIdentifier = txtSystemId.Cell.Title;
-            _builder.VolumeSetIdentifier = txtVolSetId.Cell.Title;
-            _builder.PublisherIdentifier = txtPublisherId.Cell.Title;
-            _builder.DataPreparerIdentifier = txtDataPreparer.Cell.Title;
-            _builder.ApplicationIdentifier = txtApplicationId.Cell.Title;
-            _builder.TruncateData = (chkTruncateMode.State == NSCellStateValue.On);
+            _volumeIdentifier = IsoUtilities.FixAString(txtVolumeId.Cell.Title);
+            _systemIdentifier = IsoUtilities.FixAString(txtSystemId.Cell.Title);
+            _volumeSetIdentifier = IsoUtilities.FixAString(txtVolSetId.Cell.Title);
+            _publisherIdentifier = IsoUtilities.FixAString(txtPublisherId.Cell.Title);
+            _dataPreparerIdentifier = IsoUtilities.FixAString(txtDataPreparer.Cell.Title);
+            _applicationIdentifier = IsoUtilities.FixAString(txtApplicationId.Cell.Title);
+            _truncateData = (chkTruncateMode.State == NSCellStateValue.On);
 
             NSApplication.SharedApplication.EndSheet(winAdvanced);
             winAdvanced.OrderOut(winAdvanced);
@@ -253,11 +270,12 @@ namespace GDIBuilderMac
             btnCancel.Enabled = disable;
         }
 
-        private void DoDiscBuild(string dataDir, string ipBin, List<string> trackList, string outdir)
+        private void DoDiscBuild(string dataDir, string outdir)
         {
             try
             {
-                List<DiscTrack> tracks = _builder.BuildGDROM(dataDir, ipBin, trackList, outdir, _cancelTokenSource.Token);
+                _builder.ImportFolder(dataDir, token: _cancelTokenSource.Token);
+                List<DiscTrack> tracks = _builder.BuildGDROM(outdir, _cancelTokenSource.Token);
                 if (_cancelTokenSource.IsCancellationRequested)
                 {
                     _cancelTokenSource.Dispose();

@@ -21,6 +21,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -28,7 +29,7 @@ using DiscUtils.Streams;
 
 namespace DiscUtils.Iso9660
 {
-    internal static class IsoUtilities
+    public static class IsoUtilities
     {
         public const int SectorSize = 2048;
 
@@ -190,6 +191,30 @@ namespace DiscUtils.Iso9660
             }
 
             return bytesUsed;
+        }
+
+        public static string FixAString(string str)
+        {
+            HashSet<char> removals = new HashSet<char>();
+            str = str.ToUpperInvariant();
+            for (int i = 0; i < str.Length; ++i)
+            {
+                if (!(
+                    (str[i] >= ' ' && str[i] <= '\"')
+                    || (str[i] >= '%' && str[i] <= '/')
+                    || (str[i] >= ':' && str[i] <= '?')
+                    || (str[i] >= '0' && str[i] <= '9')
+                    || (str[i] >= 'A' && str[i] <= 'Z')
+                    || (str[i] == '_')))
+                {
+                    removals.Add(str[i]);
+                }
+            }
+            foreach (char bad in removals)
+            {
+                str = str.Replace(bad.ToString(), "");
+            }
+            return str;
         }
 
         internal static bool IsValidAString(string str)
