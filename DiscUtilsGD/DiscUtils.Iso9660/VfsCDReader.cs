@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using DiscUtils.Streams;
 using DiscUtils.Vfs;
 
@@ -40,6 +41,7 @@ namespace DiscUtils.Iso9660
 
         private readonly Stream _data;
         private readonly bool _hideVersions;
+        private readonly uint _lbaStart;
 
         /// <summary>
         /// Initializes a new instance of the VfsCDReader class.
@@ -75,6 +77,7 @@ namespace DiscUtils.Iso9660
         {
             _data = data;
             _hideVersions = hideVersions;
+            _lbaStart = lbaStart;
 
             long vdpos = (lbaStart * IsoUtilities.SectorSize) + 0x8000; // Skip lead-in
 
@@ -407,6 +410,24 @@ namespace DiscUtils.Iso9660
                     initialEntry.SectorCount * Sizes.Sector);
             }
             throw new InvalidOperationException("No valid boot image");
+        }
+
+        public Stream ReadIPBin()
+        {
+            long originalPosition = _data.Position;
+            byte[] ipbinData = new byte[0x8000];
+            _data.Seek(_lbaStart * IsoUtilities.SectorSize, SeekOrigin.Begin);
+            _data.Read(ipbinData, 0, ipbinData.Length);
+            _data.Seek(originalPosition, SeekOrigin.Begin);
+            
+            byte[] checker = new byte[6];
+            Array.Copy(ipbinData, 0x25, checker, 0, 6);
+            string isGD = Encoding.ASCII.GetString(checker).Trim();
+            if (!isGD.Equals("GD-ROM", StringComparison.Ordinal))
+            {
+                throw new Exception("Disc does not contain IP.BIN!");
+            }
+            return new MemoryStream(ipbinData);
         }
 
         protected override File ConvertDirEntryToFile(ReaderDirEntry dirEntry)

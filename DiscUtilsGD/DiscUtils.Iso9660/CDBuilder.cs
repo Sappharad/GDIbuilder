@@ -294,7 +294,7 @@ namespace DiscUtils.Iso9660
             BuildDirectoryInfo dir = GetDirectory(nameElements, nameElements.Length - 1, true);
 
             BuildDirectoryMember existing;
-            if (dir.TryGetMember(nameElements[nameElements.Length - 1], out existing))
+            if (dir.TryGetMember(IsoUtilities.NormalizeFileName(nameElements[nameElements.Length - 1]), out existing))
             {
                 if (replaceExisting)
                 {
@@ -306,6 +306,7 @@ namespace DiscUtils.Iso9660
                         original.Dispose();
                         _files.RemoveAt(found);
                         _files.Insert(found, replacement);
+                        dir.Replace(replacement);
                         return replacement;
                     }
                     throw new Exception("Unable to overwrite existing file because the original couldn't be found.");

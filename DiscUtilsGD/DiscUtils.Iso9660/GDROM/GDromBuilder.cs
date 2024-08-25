@@ -617,22 +617,31 @@ namespace DiscUtils.Gdrom
             if (File.Exists(gdiPath))
             {
                 string[] file = File.ReadAllLines(gdiPath);
-                int i = 0;
-                sb.AppendLine((tracks.Count + 2).ToString());
-                if (file.Length > 0 && file[0].Length <= 3)
+                WriteGdiFile(file, tracks, gdiPath);
+                return;
+            }
+            sb.Append(GetGDIText(tracks));
+            File.WriteAllText(gdiPath, sb.ToString());
+        }
+
+        public void WriteGdiFile(string[] gdiLines, List<DiscTrack> tracks, string gdiPath)
+        {
+            StringBuilder sb = new StringBuilder();                
+            int i = 0;
+            sb.AppendLine((tracks.Count + 2).ToString());
+            if (gdiLines.Length > 0 && gdiLines[0].Length <= 3)
+            {
+                i++;
+            }
+            for (; i < gdiLines.Length; i++)
+            {
+                if (gdiLines[i].StartsWith("3"))
                 {
-                    i++;
+                    break;
                 }
-                for (; i < file.Length; i++)
+                else
                 {
-                    if (file[i].StartsWith("3"))
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        sb.AppendLine(file[i]);
-                    }
+                    sb.AppendLine(gdiLines[i]);
                 }
             }
             sb.Append(GetGDIText(tracks));
@@ -679,6 +688,42 @@ namespace DiscUtils.Gdrom
                 intoDiscPath = string.Empty;
             }
             PopulateFromFolder(di, di.FullName, intoDiscPath, allowOverwrite, token);
+        }
+
+        /// <summary>
+        /// Import a folder from an existing GDReader.
+        /// </summary>
+        /// <param name="reader">The GDReader to import from</param>
+        /// <param name="sourceFolder">The source folder to import (An empty string will grab the entire disk)</param>
+        /// <param name="recursive">Include subdirectories</param>
+        public void ImportReader(GDReader reader, string sourceFolder = "", bool recursive = true)
+        {
+            string[] files = reader.GetFiles(sourceFolder ?? "");
+            foreach (var file in files)
+            {
+                string filePath = file;
+                if (filePath.StartsWith("\\"))
+                {
+                    filePath = filePath.Substring(1); //I don't want the leading slash, it breaks things;
+                }
+                var info = ImportFile(reader.OpenFile(file, FileMode.Open, FileAccess.Read), filePath);
+                info.CreationTime = reader.GetCreationTimeUtc(file);
+            }
+            if (recursive)
+            {
+                string[] folders = reader.GetDirectories(sourceFolder ?? "");
+                foreach (string subfolder in folders)
+                {
+                    string folderPath = subfolder;
+                    if (folderPath.StartsWith("\\"))
+                    {
+                        folderPath = folderPath.Substring(1);
+                    }
+                    var info = CreateDirectory(folderPath);
+                    info.CreationTime = reader.GetCreationTimeUtc(subfolder);
+                    ImportReader(reader, folderPath, recursive);
+                }
+            }
         }
 
         public BuildDirectoryInfo CreateDirectory(string atDiscPath)

@@ -33,17 +33,29 @@ namespace DiscUtils.Gdrom
         /// </summary>
         /// <param name="gdiPath">The path to the GDI</param>
         /// <returns>A GDReader for the high density files on the disc</returns>
-        public static GDReader FromGDI(string gdiPath)
+        public static GDReader FromGDIfile(string gdiPath)
         {
             if (!File.Exists(gdiPath))
             {
                 throw new FileNotFoundException("The input GDI was not found or accessible.", gdiPath);
             }
             string[] gdiLines = File.ReadAllText(gdiPath).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            return FromGDItext(gdiLines, Path.GetDirectoryName(gdiPath));
+        }
+
+        /// <summary>
+        /// Reads the high density area using the track information from a GDI file whose lines you already have in memory.
+        /// </summary>
+        /// <param name="gdiLines">The lines of text from the GDI file</param>
+        /// <param name="sourceDirectory">The path of the directory that this gdi references</param>
+        /// <returns>A GDReader for the high density files on the disc</returns>
+        /// <exception cref="FileNotFoundException">If the GDI references tracks that do not exist in the source directory</exception>
+        public static GDReader FromGDItext(string[] gdiLines, string sourceDirectory)
+        {
             if (gdiLines.Length > 3 && int.TryParse(gdiLines[0], out int numTracks) && numTracks >= 3)
             {
                 //This code assumes the GDI track list is sorted sequentially and there are only 1 or 2 high density data tracks.
-                var track3 = ParseTrackInfo(gdiLines[3], Path.GetDirectoryName(gdiPath));
+                var track3 = ParseTrackInfo(gdiLines[3], sourceDirectory);
                 if (track3 != null)
                 {
                     if (!File.Exists(track3.Value.filename))
@@ -54,7 +66,7 @@ namespace DiscUtils.Gdrom
                     tracks.Add(new GDDataTrack(new FileStream(track3.Value.filename, FileMode.Open, FileAccess.Read), track3.Value.lba, track3.Value.sectorSize));
                     if (numTracks > 3)
                     {
-                        var finalTrack = ParseTrackInfo(gdiLines[numTracks], Path.GetDirectoryName(gdiPath));
+                        var finalTrack = ParseTrackInfo(gdiLines[numTracks], sourceDirectory);
                         if (!File.Exists(track3.Value.filename))
                         {
                             throw new FileNotFoundException("The GDI references a track file that does not exist!", track3.Value.filename);

@@ -205,5 +205,14 @@ namespace DiscUtils.Iso9660
         {
             return GetRealFileSystem<VfsCDReader>().OpenBootImage();
         }
+
+        /// <summary>
+        /// Read the IP.BIN if this is a GD-ROM
+        /// </summary>
+        /// <returns>The IP.BIN data as a stream.</returns>
+        public Stream ReadIPBin()
+        {
+            return GetRealFileSystem<VfsCDReader>().ReadIPBin();
+        }
     }
 }

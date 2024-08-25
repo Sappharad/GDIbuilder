@@ -75,6 +75,16 @@ namespace DiscUtils.Iso9660
             _sortedMembers = null;
         }
 
+        internal void Replace(BuildDirectoryMember member)
+        {
+            if (_members.ContainsKey(member.Name))
+            {
+                _members.Remove(member.Name);
+            }
+            _members.Add(member.Name, member);
+            _sortedMembers = null;
+        }
+
         internal override long GetDataSize(Encoding enc)
         {
             List<BuildDirectoryMember> sorted = GetSortedMembers();
