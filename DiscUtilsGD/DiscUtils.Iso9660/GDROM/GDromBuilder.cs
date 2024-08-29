@@ -51,6 +51,12 @@ namespace DiscUtils.Gdrom
             get => _builder.ApplicationIdentifier; 
             set => _builder.ApplicationIdentifier = value;
         }
+
+        public DateTime? BuildDate
+        {
+            get => _builder.BuildDate;
+            set => _builder.BuildDate = value;
+        }
         private int _lastProgress;
         public delegate void OnReportProgress(int percent);
         public OnReportProgress ReportProgress { get; set; }
@@ -699,6 +705,16 @@ namespace DiscUtils.Gdrom
         public void ImportReader(GDReader reader, string sourceFolder = "", bool recursive = true)
         {
             string[] files = reader.GetFiles(sourceFolder ?? "");
+            if (string.IsNullOrEmpty(sourceFolder))
+            {
+                //Root directory, set creation date on it
+                BuildDirectoryInfo dir = _builder.AddDirectory(sourceFolder);
+                if (reader.Root.CreationTimeUtc < dir.CreationTime)
+                {
+                    //Oldest creation date wins. Applicable if this is a newly added directory, or if we are combining two copies of the same folder.
+                    dir.CreationTime = reader.Root.CreationTimeUtc;
+                }
+            }
             foreach (var file in files)
             {
                 string filePath = file;
@@ -761,16 +777,13 @@ namespace DiscUtils.Gdrom
             FileInfo[] folderFiles = di.GetFiles();
             //Add directory first, so we can set the creation time correctly.
             string localDirPath = intoDiscPath + di.FullName.Substring(basePath.Length);
-            if (localDirPath.Length > 1)
+            BuildDirectoryInfo dir = _builder.AddDirectory(localDirPath);
+            if (di.CreationTimeUtc < dir.CreationTime)
             {
-                //Add directory first, so it has the correct creation time.
-                BuildDirectoryInfo dir = _builder.AddDirectory(localDirPath);
-                if (di.CreationTimeUtc < dir.CreationTime)
-                {
-                    //Oldest creation date wins. Applicable if this is a newly added directory, or if we are combining two copies of the same folder.
-                    dir.CreationTime = di.CreationTimeUtc;
-                }
+                //Oldest creation date wins. Applicable if this is a newly added directory, or if we are combining two copies of the same folder.
+                dir.CreationTime = di.CreationTimeUtc;
             }
+            
             foreach (FileInfo file in folderFiles)
             {
                 string filePath = intoDiscPath + file.FullName.Substring(basePath.Length);
@@ -785,9 +798,9 @@ namespace DiscUtils.Gdrom
                 return;
             }
 
-            foreach (DirectoryInfo dir in di.GetDirectories())
+            foreach (DirectoryInfo subdir in di.GetDirectories())
             {
-                PopulateFromFolder(dir, basePath, intoDiscPath, allowOverwrite, token);
+                PopulateFromFolder(subdir, basePath, intoDiscPath, allowOverwrite, token);
             }
         }
         

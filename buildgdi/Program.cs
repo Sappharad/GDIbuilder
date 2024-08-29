@@ -20,12 +20,13 @@ namespace buildgdi
             List<string> cdda = GetMultiArgument("-cdda", args);
             string gdiPath = GetSoloArgument("-gdi", args);
             string volume = GetSoloArgument("-V", args);
+            string buildDate = GetSoloArgument("-date", args);
             bool rebuild = HasArgument("-rebuild", args);
             bool extract = HasArgument("-extract", args);
             bool truncate = HasArgument("-truncate", args);
             bool useIsoSectors = HasArgument("-iso", args);
-            bool fileOutput = false;
-            if (CheckArguments(extract, rebuild, data, ipBin, gdiPath, outPath, cdda, truncate, out fileOutput) == false)
+            if (CheckArguments(extract, rebuild, data, ipBin, gdiPath, outPath, cdda, truncate, buildDate, 
+                out bool fileOutput, out DateTime? builtTime) == false)
             {
                 return;
             }
@@ -37,11 +38,11 @@ namespace buildgdi
             }
             else if (rebuild)
             {
-                Rebuild(gdiPath, data, ipBin, cdda, outPath, volume, useIsoSectors, truncate);
+                Rebuild(gdiPath, data, ipBin, cdda, outPath, volume, useIsoSectors, truncate, builtTime);
             }
             else
             {
-                BuildDisc(ipBin, cdda, useIsoSectors, truncate, data, volume, fileOutput, outPath, gdiPath);
+                BuildDisc(ipBin, cdda, useIsoSectors, truncate, builtTime, data, volume, fileOutput, outPath, gdiPath);
             }
         }
 
@@ -131,7 +132,7 @@ namespace buildgdi
         }
 
         private static void Rebuild(string gdiPath, string data, string ipBin, List<string> cdda, List<string> outPath, 
-            string volume, bool useIsoSectors, bool truncate)
+            string volume, bool useIsoSectors, bool truncate, DateTime? buildDate)
         {
             string gdiDirectory = Path.GetDirectoryName(gdiPath);
             string[] gdiLines = File.ReadAllText(gdiPath).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -164,6 +165,7 @@ namespace buildgdi
                 builder.ReportProgress += ProgressReport;
                 builder.RawMode = !useIsoSectors;
                 builder.TruncateData = truncate;
+                builder.BuildDate = buildDate;
                 if (volume != null)
                 {
                     builder.VolumeIdentifier = volume;
@@ -199,7 +201,6 @@ namespace buildgdi
             }
         }
 
-
         private static string ParseGdiTrackPath(string trackInfo, string sourceDir)
         {
             string[] pieces = trackInfo.Split(' ');
@@ -210,13 +211,14 @@ namespace buildgdi
             return null;
         }
 
-        private static void BuildDisc(string ipBin, List<string> cdda, bool useIsoSectors, bool truncate, 
+        private static void BuildDisc(string ipBin, List<string> cdda, bool useIsoSectors, bool truncate, DateTime? buildDate,
             string data, string volume, bool fileOutput, List<string> outPath, string gdiPath)
         {
             GDromBuilder builder = new GDromBuilder(ipBin, cdda);
             builder.ReportProgress += ProgressReport;
             builder.RawMode = !useIsoSectors;
             builder.TruncateData = truncate;
+            builder.BuildDate = buildDate;
             builder.ImportFolder(data);
             if (volume != null)
             {
@@ -257,9 +259,10 @@ namespace buildgdi
         }
 
         private static bool CheckArguments(bool extracting, bool rebuild, string data, string ipBin, string gdiPath,
-            List<string> outPath, List<string> cdda, bool truncate, out bool fileOutput)
+            List<string> outPath, List<string> cdda, bool truncate, string buildDate, out bool fileOutput, out DateTime? builtTime)
         {
             fileOutput = false;
+            builtTime = null;
             if (extracting || rebuild)
             {
                 if (string.IsNullOrEmpty(gdiPath) || !File.Exists(gdiPath) || !Path.GetExtension(gdiPath).ToLower().Equals(".gdi"))
@@ -290,6 +293,18 @@ namespace buildgdi
                     return false;
                 }
                 return true; //This is all we need to check for extraction
+            }
+            if (!string.IsNullOrEmpty(buildDate))
+            {
+                if (DateTime.TryParse(buildDate, out DateTime parsedDate))
+                {
+                    builtTime = parsedDate;
+                }
+                else
+                {
+                    Console.WriteLine("Failed to understand the custom date argument. Please try using the format: YYYY-MM-dd hh:mm:ss");
+                    return false;
+                }
             }
             if (data == null || (!rebuild && ipBin == null) || outPath.Count == 0)
             {
@@ -453,6 +468,7 @@ namespace buildgdi
             Console.WriteLine("-V <volume identifier> (Optional) = The volume name (Default is DREAMCAST)");
             Console.WriteLine("-iso (Optional) = Output 2048 byte disc sectors found in ISO9660 instead of 2352");
             Console.WriteLine("-truncate (Optional) = Do not pad generated data to the correct size");
+            Console.WriteLine("-date (Optional) = Set a custom date and time that the disc was created");
             Console.WriteLine("-rebuild (Optional) = Build a new GDI using an existing one as a data source");
             Console.WriteLine("   Requires the -gdi, -data and -output arguments. Files will be copied from ");
             Console.WriteLine("   the original disc. Files in the -data folder will be added to the copied ");

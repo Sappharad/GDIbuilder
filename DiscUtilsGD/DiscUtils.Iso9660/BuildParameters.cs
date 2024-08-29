@@ -20,6 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 //
 
+using System;
+
 namespace DiscUtils.Iso9660
 {
     internal class BuildParameters
@@ -45,6 +47,7 @@ namespace DiscUtils.Iso9660
         public uint LBAoffset { get; set; }
         public uint LastFileStartSector { get; set; }
         public uint? EndSector { get; set; }
+        public DateTime? BuildDate { get; set; }
 
     }
 }

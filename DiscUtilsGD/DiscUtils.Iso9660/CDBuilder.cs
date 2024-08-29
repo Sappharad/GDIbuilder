@@ -204,6 +204,12 @@ namespace DiscUtils.Iso9660
             set { _buildParams.EndSector = value; }
         }
 
+        public DateTime? BuildDate
+        {
+            get { return _buildParams.BuildDate; }
+            set { _buildParams.BuildDate = value; }
+        }
+
 
         /// <summary>
         /// Sets the boot image for the ISO image.
@@ -399,7 +405,7 @@ namespace DiscUtils.Iso9660
         {
             List<BuilderExtent> fixedRegions = new List<BuilderExtent>();
 
-            DateTime buildTime = DateTime.UtcNow;
+            DateTime buildTime = BuildDate ?? DateTime.UtcNow;
 
             Encoding suppEncoding = _buildParams.UseJoliet ? Encoding.BigEndianUnicode : Encoding.ASCII;
 
