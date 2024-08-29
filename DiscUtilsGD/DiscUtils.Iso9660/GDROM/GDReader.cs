@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using DiscUtils.Iso9660;
-using System.Collections.Generic;
 using File = System.IO.File;
+using System.Collections.Generic;
 
 namespace DiscUtils.Gdrom
 {
@@ -91,6 +91,45 @@ namespace DiscUtils.Gdrom
                 return (filename: Path.Combine(sourceDir, pieces[4]), lba, sectorSize);
             }
             return null;
+        }
+
+        public override DateTime GetCreationTimeUtc(string path)
+        {
+            return CheckFixDateBug(base.GetCreationTimeUtc(path));
+        }
+        public override DateTime GetLastAccessTimeUtc(string path)
+        {
+            return CheckFixDateBug(base.GetLastAccessTimeUtc(path));
+        }
+        public override DateTime GetLastWriteTimeUtc(string path)
+        {
+            return CheckFixDateBug(base.GetLastWriteTimeUtc(path));
+        }
+        private int? _discCreationYear;
+        private bool _checkedYear;
+        /// <summary>
+        /// Some official GD-ROM discs were built with a tool that stored the year incorrectly in DirectoryInfo entries.
+        /// The year on file entries is an 8-bit number representing the number of years since 1900.
+        /// However, these incorrect discs store the year as the low byte of the full year.
+        /// For example the year 2001, which is 0x07D1 in Hex, would be stored as 0xD1. 
+        /// This would be read back as the year 2109. Since the disc mastering date is stored as a full year, 
+        /// we can check this date to see if there's a problem. If the disc was written over 50 years before a file on it,
+        /// assume the year is stored incorrectly and treat it as if it were the 2nd byte of the full year.
+        /// </summary>
+        /// <param name="input">A file timestamp from the disc</param>
+        /// <returns>The original date if it is correct, or a fixed date if it is far newer than the disc itself.</returns>
+        private DateTime CheckFixDateBug(DateTime input)
+        {
+            if (_discCreationYear == null && _checkedYear == false)
+            {
+                _checkedYear = true; //Fetching root date would call this recursively otherwise.
+                _discCreationYear = Root.CreationTimeUtc.Year;
+            }
+            if (input.Year > _discCreationYear + 50)
+            {
+                return new DateTime(0x700 + ((input.Year - 1900) & 0xFF), input.Month, input.Day, input.Hour, input.Minute, input.Second, input.Millisecond, input.Kind);
+            }
+            return input;
         }
     }
 
