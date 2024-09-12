@@ -307,7 +307,7 @@ namespace DiscUtils.Gdrom
 
         private void AdjustTracking(long position)
         {
-            if (position < _currentTrack?.DataStart && position >= _currentTrack?.DataEnd)
+            if (position < _currentTrack?.DataStart || position >= _currentTrack?.DataEnd)
             {
                 foreach (GDDataTrack track in _input)
                 {
