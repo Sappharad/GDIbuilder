@@ -3,6 +3,7 @@ using System.IO;
 using DiscUtils.Iso9660;
 using File = System.IO.File;
 using System.Collections.Generic;
+using System.Text;
 
 namespace DiscUtils.Gdrom
 {
@@ -86,11 +87,47 @@ namespace DiscUtils.Gdrom
         private static (string filename, uint lba, uint sectorSize)? ParseTrackInfo(string trackInfo, string sourceDir)
         {
             string[] pieces = trackInfo.Split(' ');
+            if (pieces.Length > 6 || trackInfo.IndexOf('"') > 0)
+            {
+                pieces = ManuallySplitInfo(trackInfo);
+            }
             if (pieces.Length == 6 && uint.TryParse(pieces[1], out uint lba) && uint.TryParse(pieces[3], out uint sectorSize))
             {
                 return (filename: Path.Combine(sourceDir, pieces[4]), lba, sectorSize);
             }
             return null;
+        }
+
+        private static string[] ManuallySplitInfo(string trackInfo)
+        {
+            List<string> pieces = new List<string>();
+            StringBuilder current = new StringBuilder();
+            for (int i = 0; i < trackInfo.Length; i++)
+            {
+                if (char.IsWhiteSpace(trackInfo[i]))
+                {
+                    if (current.Length > 0)
+                    {
+                        pieces.Add(current.ToString());
+                        current.Clear();
+                    }
+                }
+                else if (trackInfo[i] == '"' && trackInfo.IndexOf('"', i + 1) > 0)
+                {
+                    int end = trackInfo.IndexOf('"', i + 1);
+                    current.Append(trackInfo.Substring(i + 1, end - i - 1));
+                    i = end;
+                }
+                else
+                {
+                    current.Append(trackInfo[i]);
+                }
+            }
+            if (current.Length > 0)
+            {
+                pieces.Add(current.ToString());
+            }
+            return pieces.ToArray();
         }
 
         public override DateTime GetCreationTimeUtc(string path)

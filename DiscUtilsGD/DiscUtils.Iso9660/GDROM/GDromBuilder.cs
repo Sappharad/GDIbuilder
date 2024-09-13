@@ -632,7 +632,7 @@ namespace DiscUtils.Gdrom
 
         public void WriteGdiFile(string[] gdiLines, List<DiscTrack> tracks, string gdiPath)
         {
-            StringBuilder sb = new StringBuilder();                
+            StringBuilder sb = new StringBuilder();
             int i = 0;
             sb.AppendLine((tracks.Count + 2).ToString());
             if (gdiLines.Length > 0 && gdiLines[0].Length <= 3)
