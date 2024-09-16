@@ -3,6 +3,7 @@ using AppKit;
 using Foundation;
 using DiscUtils.Gdrom;
 using System.Threading;
+using DiscUtils.Iso9660;
 using System.Collections.Generic;
 
 namespace GDIBuilderMac
@@ -12,6 +13,14 @@ namespace GDIBuilderMac
         private CddaTrackSource _tracks;
         private GDromBuilder _builder;
         private Thread _worker;
+        private CancellationTokenSource _cancelTokenSource;
+        private string _volumeIdentifier = "DREAMCAST";
+        private string _systemIdentifier = string.Empty;
+        private string _volumeSetIdentifier = string.Empty;
+        private string _publisherIdentifier = string.Empty;
+        private string _dataPreparerIdentifier = string.Empty;
+        private string _applicationIdentifier = string.Empty;
+        private bool _truncateData = false;
 
         public ViewController(IntPtr handle) : base(handle)
         {
@@ -24,6 +33,7 @@ namespace GDIBuilderMac
             tblCdda.DataSource = _tracks;
             pbProgress.MinValue = 0;
             pbProgress.MaxValue = 100;
+            btnCancel.Hidden = true;
 
             // Do any additional setup after loading the view.
         }
@@ -45,7 +55,6 @@ namespace GDIBuilderMac
         void Initialize()
         {
             _tracks = new CddaTrackSource();
-            _builder = new GDromBuilder();
         }
 
         partial void btnAddCdda_Clicked(Foundation.NSObject sender)
@@ -61,7 +70,17 @@ namespace GDIBuilderMac
                 {
                     foreach (NSUrl url in openPanel.Urls)
                     {
-                        _tracks.Rows.Add(new CddaItem(url.Path));
+                        if (url.Path?.EndsWith("track02.raw", StringComparison.OrdinalIgnoreCase) == true)
+                        {
+                            NSAlert dialog = NSAlert.WithMessage("A mistake was made", "OK", null, null,
+                                "This tool is only for building the high density area of a GD-ROM. You selected Track 2, which is part of the PC readable portion of the disc. " +
+                                "This file has been automatically ignored. Please read the instructions for more information.");
+                            dialog.RunModal();
+                        }
+                        else
+                        {
+                            _tracks.Rows.Add(new CddaItem(url.Path));
+                        }
                     }
                     tblCdda.ReloadData();
                 }
@@ -70,13 +89,13 @@ namespace GDIBuilderMac
 
         partial void btnAdvanced_Clicked(Foundation.NSObject sender)
         {
-            txtVolumeId.Cell.Title = _builder.VolumeIdentifier;
-            txtSystemId.Cell.Title = _builder.SystemIdentifier;
-            txtVolSetId.Cell.Title = _builder.VolumeSetIdentifier;
-            txtPublisherId.Cell.Title = _builder.PublisherIdentifier;
-            txtDataPreparer.Cell.Title = _builder.DataPreparerIdentifier;
-            txtApplicationId.Cell.Title = _builder.ApplicationIdentifier;
-            chkTruncateMode.State = (_builder.TruncateData) ? NSCellStateValue.On : NSCellStateValue.Off;
+            txtVolumeId.Cell.Title = _volumeIdentifier;
+            txtSystemId.Cell.Title = _systemIdentifier;
+            txtVolSetId.Cell.Title = _volumeSetIdentifier;
+            txtPublisherId.Cell.Title = _publisherIdentifier;
+            txtDataPreparer.Cell.Title = _dataPreparerIdentifier;
+            txtApplicationId.Cell.Title = _applicationIdentifier;
+            chkTruncateMode.State = (_truncateData) ? NSCellStateValue.On : NSCellStateValue.Off;
 
             NSApplication.SharedApplication.BeginSheet(winAdvanced, View.Window);
         }
@@ -131,7 +150,7 @@ namespace GDIBuilderMac
                 {
                     cdTracks.Add(lvi.FilePath);
                 }
-                string checkMsg = _builder.CheckOutputExists(cdTracks, txtOutput.Cell.Title);
+                string checkMsg = GDromBuilder.CheckOutputExists(cdTracks, txtOutput.Cell.Title);
                 if (checkMsg != null)
                 {
                     NSAlert dialog = NSAlert.WithMessage("Warning", "No", "Yes", null, checkMsg);
@@ -140,19 +159,36 @@ namespace GDIBuilderMac
                         return;
                     }
                 }
-                DisableButtons();
-                _builder.RawMode = (chkRawMode.State == NSCellStateValue.On);
-                _builder.ReportProgress = UpdateProgress;
+
+                EnableOrDisableButtons(disable: true);
                 string dataPath = txtData.Cell.Title;
                 string ipBinPath = txtIpBin.Cell.Title;
                 string outputPath = txtOutput.Cell.Title;
-                _worker = new Thread(() => DoDiscBuild(dataPath, ipBinPath, cdTracks, outputPath));
+                _builder = new GDromBuilder(ipBinPath, cdTracks)
+                {
+                    VolumeIdentifier = _volumeIdentifier,
+                    SystemIdentifier = _systemIdentifier,
+                    VolumeSetIdentifier = _volumeSetIdentifier,
+                    PublisherIdentifier = _publisherIdentifier,
+                    DataPreparerIdentifier = _dataPreparerIdentifier,
+                    ApplicationIdentifier = _applicationIdentifier,
+                    TruncateData = (chkTruncateMode.State == NSCellStateValue.On),
+                    RawMode = (chkRawMode.State == NSCellStateValue.On),
+                    ReportProgress = UpdateProgress
+                };
+                _cancelTokenSource = new CancellationTokenSource();
+                _worker = new Thread(() => DoDiscBuild(dataPath, outputPath));
                 _worker.Start();
             }
             else
             {
                 NSAlert.WithMessage("Error", "OK", null, null, "Not ready to build disc. Please provide more information above.").RunModal();
             }
+        }
+
+        partial void btnCancel_Clicked(Foundation.NSObject sender)
+        {
+            _cancelTokenSource?.Cancel();
         }
 
         partial void btnDown_Clicked(Foundation.NSObject sender)
@@ -198,13 +234,13 @@ namespace GDIBuilderMac
 
         partial void btnAdvancedOk_Clicked(Foundation.NSObject sender)
         {
-            _builder.VolumeIdentifier = txtVolumeId.Cell.Title;
-            _builder.SystemIdentifier = txtSystemId.Cell.Title;
-            _builder.VolumeSetIdentifier = txtVolSetId.Cell.Title;
-            _builder.PublisherIdentifier = txtPublisherId.Cell.Title;
-            _builder.DataPreparerIdentifier = txtDataPreparer.Cell.Title;
-            _builder.ApplicationIdentifier = txtApplicationId.Cell.Title;
-            _builder.TruncateData = (chkTruncateMode.State == NSCellStateValue.On);
+            _volumeIdentifier = IsoUtilities.FixAString(txtVolumeId.Cell.Title);
+            _systemIdentifier = IsoUtilities.FixAString(txtSystemId.Cell.Title);
+            _volumeSetIdentifier = IsoUtilities.FixAString(txtVolSetId.Cell.Title);
+            _publisherIdentifier = IsoUtilities.FixAString(txtPublisherId.Cell.Title);
+            _dataPreparerIdentifier = IsoUtilities.FixAString(txtDataPreparer.Cell.Title);
+            _applicationIdentifier = IsoUtilities.FixAString(txtApplicationId.Cell.Title);
+            _truncateData = (chkTruncateMode.State == NSCellStateValue.On);
 
             NSApplication.SharedApplication.EndSheet(winAdvanced);
             winAdvanced.OrderOut(winAdvanced);
@@ -217,35 +253,52 @@ namespace GDIBuilderMac
             View.Window.Close();
         }
 
-        private void DisableButtons()
+        private void EnableOrDisableButtons(bool disable)
         {
-            btnAddCdda.Enabled = false;
-            btnAdvanced.Enabled = false;
-            btnBrowseData.Enabled = false;
-            btnBrowseIpBin.Enabled = false;
-            btnBrowseOutput.Enabled = false;
-            btnCreate.Enabled = false;
-            btnUp.Enabled = false;
-            btnDown.Enabled = false;
-            btnRemoveCdda.Enabled = false;
-            chkRawMode.Enabled = false;
+            btnAddCdda.Enabled = !disable;
+            btnAdvanced.Enabled = !disable;
+            btnBrowseData.Enabled = !disable;
+            btnBrowseIpBin.Enabled = !disable;
+            btnBrowseOutput.Enabled = !disable;
+            btnCreate.Enabled = !disable;
+            btnUp.Enabled = !disable;
+            btnDown.Enabled = !disable;
+            btnRemoveCdda.Enabled = !disable;
+            chkRawMode.Enabled = !disable;
+            
+            btnCancel.Hidden = !disable;
+            btnCancel.Enabled = disable;
         }
 
-        private void DoDiscBuild(string dataDir, string ipBin, List<string> trackList, string outdir)
+        private void DoDiscBuild(string dataDir, string outdir)
         {
             try
             {
-                List<DiscTrack> tracks = _builder.BuildGDROM(dataDir, ipBin, trackList, outdir);
-                InvokeOnMainThread(new Action(() =>
+                _builder.ImportFolder(dataDir, token: _cancelTokenSource.Token);
+                List<DiscTrack> tracks = _builder.BuildGDROM(outdir, _cancelTokenSource.Token);
+                if (_cancelTokenSource.IsCancellationRequested)
                 {
-                    string gdiPath = System.IO.Path.Combine(outdir, "disc.gdi");
-                    if (System.IO.File.Exists(gdiPath))
+                    _cancelTokenSource.Dispose();
+                    _cancelTokenSource = null;
+                    InvokeOnMainThread(new Action(() =>
                     {
-                        _builder.UpdateGdiFile(tracks, gdiPath);
-                    }
-                    txtResult.Cell.Title = _builder.GetGDIText(tracks);
-                    NSApplication.SharedApplication.BeginSheet(winFinished, View.Window);
-                }));
+                        EnableOrDisableButtons(disable: false);
+                        pbProgress.DoubleValue = 0;
+                    }));
+                }
+                else
+                {
+                    InvokeOnMainThread(new Action(() =>
+                    {
+                        string gdiPath = System.IO.Path.Combine(outdir, "disc.gdi");
+                        if (System.IO.File.Exists(gdiPath))
+                        {
+                            _builder.UpdateGdiFile(tracks, gdiPath);
+                        }
+                        txtResult.Cell.Title = _builder.GetGDIText(tracks);
+                        NSApplication.SharedApplication.BeginSheet(winFinished, View.Window);
+                    }));
+                }
             }
             catch (Exception ex)
             {

@@ -87,13 +87,13 @@
     <InterfaceDefinition Include="Main.storyboard" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GDIbuilder\DiscUtils\DiscUtils.csproj">
-      <Project>{DBB340F9-2386-43C2-A473-FA496CBE07A4}</Project>
-      <Name>DiscUtils</Name>
-    </ProjectReference>
+    <BundleResource Include="Resources\BlankMedia.icns" />
   </ItemGroup>
   <ItemGroup>
-    <BundleResource Include="Resources\BlankMedia.icns" />
+    <ProjectReference Include="..\DiscUtilsGD\DiscUtilsGD.csproj">
+      <Project>{89b320b4-f8cd-449c-9ee6-103d1aba6636}</Project>
+      <Name>DiscUtilsGD</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Mac\Xamarin.Mac.CSharp.targets" />
 </Project>
