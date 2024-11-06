@@ -45,6 +45,21 @@ namespace DiscUtils.Gdrom
         }
 
         /// <summary>
+        /// Reads the high density area using the track information from a CUE sheet.
+        /// </summary>
+        /// <param name="cuePath">The path to the CUE sheet</param>
+        /// <returns>A GDReader for the high density files on the disc</returns>
+        public static GDReader FromCueSheet(string cuePath)
+        {
+            if (!File.Exists(cuePath))
+            {
+                throw new FileNotFoundException("The input CUE sheet was not found or accessible.", cuePath);
+            }
+            string[] cueLines = File.ReadAllText(cuePath).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            return FromCueText(cueLines, Path.GetDirectoryName(cuePath));
+        }
+
+        /// <summary>
         /// Reads the high density area using the track information from a GDI file whose lines you already have in memory.
         /// </summary>
         /// <param name="gdiLines">The lines of text from the GDI file</param>
@@ -128,6 +143,57 @@ namespace DiscUtils.Gdrom
                 pieces.Add(current.ToString());
             }
             return pieces.ToArray();
+        }
+
+        /// <summary>
+        /// Reads the high density area using the track information from a CUE sheet whose lines you already have in memory.
+        /// </summary>
+        /// <param name="cueLines">The lines of text from the cue sheet</param>
+        /// <param name="sourceDirectory">The path of the directory that this cue sheet references</param>
+        /// <returns>A GDReader for the high density files on the disc</returns>
+        /// <exception cref="FileNotFoundException">If the cue sheet references tracks that do not exist in the source directory</exception>
+        public static GDReader FromCueText(string[] cueLines, string sourceDirectory)
+        {
+            int highDensityStart = -1;
+            for (int i = 0; i < cueLines.Length; i++)
+            {
+                if (cueLines[i].StartsWith("REM", StringComparison.Ordinal) && cueLines[i].IndexOf("HIGH-DENSITY", StringComparison.Ordinal) > 0)
+                {
+                    highDensityStart = i+1; break;
+                }
+            }
+            if (highDensityStart >= 0)
+            {
+                List<GDDataTrack> tracks = new List<GDDataTrack>();
+                string currentFile = null;
+                uint currentLba = 45000;
+                for (int i = highDensityStart; i < cueLines.Length; i++)
+                {
+                    string[] entry = ManuallySplitInfo(cueLines[i]);
+                    if (entry.Length == 3)
+                    {
+                        if (entry[0].Equals("FILE", StringComparison.Ordinal) && entry[2].Equals("BINARY", StringComparison.Ordinal))
+                        {
+                            currentFile = Path.Combine(sourceDirectory, entry[1]);
+                        }
+                        else if (entry[0].Equals("TRACK", StringComparison.Ordinal) && entry[2].IndexOf('/') > 0)
+                        {
+                            string sectorSizeText = entry[2].Substring(entry[2].IndexOf('/') + 1);
+                            if (uint.TryParse(sectorSizeText, out uint sectorSize))
+                            {
+                                var stream = new FileStream(currentFile, FileMode.Open, FileAccess.Read);
+                                tracks.Add(new GDDataTrack(stream, currentLba, sectorSize));
+                                currentLba += (uint)(stream.Length / sectorSize);
+                            }
+                        }
+                    }
+                }
+                if (tracks.Count > 0)
+                {
+                    return new GDReader(tracks);
+                }
+            }
+            return null;
         }
 
         public override DateTime GetCreationTimeUtc(string path)

@@ -19,21 +19,22 @@ namespace buildgdi
             List<string> outPath = GetMultiArgument("-output", args);
             List<string> cdda = GetMultiArgument("-cdda", args);
             string gdiPath = GetSoloArgument("-gdi", args);
+            string cuePath = GetSoloArgument("-cue", args);
             string volume = GetSoloArgument("-V", args);
             string buildDate = GetSoloArgument("-date", args);
             bool rebuild = HasArgument("-rebuild", args);
             bool extract = HasArgument("-extract", args);
             bool truncate = HasArgument("-truncate", args);
             bool useIsoSectors = HasArgument("-iso", args);
-            if (CheckArguments(extract, rebuild, data, ipBin, gdiPath, outPath, cdda, truncate, buildDate, 
-                out bool fileOutput, out DateTime? builtTime) == false)
+            if (CheckArguments(extract, rebuild, data, ipBin, gdiPath, cuePath, outPath, cdda, 
+                truncate, buildDate, out bool fileOutput, out DateTime? builtTime) == false)
             {
                 return;
             }
             if (extract)
             {
                 Console.WriteLine("Starting extraction");
-                Extract(gdiPath, ipBin, outPath);
+                Extract(gdiPath, cuePath, ipBin, outPath);
                 Console.WriteLine("Done!");
             }
             else if (rebuild)
@@ -46,9 +47,18 @@ namespace buildgdi
             }
         }
 
-        private static void Extract(string gdiPath, string ipBin, List<string> outPath)
+        private static void Extract(string gdiPath, string cuePath, string ipBin, List<string> outPath)
         {
-            using (GDReader reader = GDReader.FromGDIfile(gdiPath))
+            GDReader reader;
+            if (!string.IsNullOrEmpty(cuePath)) 
+            {
+                reader = GDReader.FromCueSheet(cuePath);
+            }
+            else
+            {
+                reader = GDReader.FromGDIfile(gdiPath);
+            }
+            try
             {
                 if (!string.IsNullOrEmpty(ipBin))
                 {
@@ -74,6 +84,10 @@ namespace buildgdi
                     Directory.CreateDirectory(outPath[0]);
                 }
                 ExtractFolder(reader, "", outPath[0]);
+            }
+            finally
+            {
+                reader.Dispose();
             }
         }
 
@@ -258,16 +272,31 @@ namespace buildgdi
             }
         }
 
-        private static bool CheckArguments(bool extracting, bool rebuild, string data, string ipBin, string gdiPath,
+        private static bool CheckArguments(bool extracting, bool rebuild, string data, string ipBin, string gdiPath, string cuePath,
             List<string> outPath, List<string> cdda, bool truncate, string buildDate, out bool fileOutput, out DateTime? builtTime)
         {
             fileOutput = false;
             builtTime = null;
             if (extracting || rebuild)
             {
-                if (string.IsNullOrEmpty(gdiPath) || !File.Exists(gdiPath) || !Path.GetExtension(gdiPath).ToLower().Equals(".gdi"))
+                if (!string.IsNullOrEmpty(gdiPath) && !string.IsNullOrEmpty(cuePath))
                 {
-                    Console.WriteLine($"A .gdi file is required in {(extracting ? "extract" : "rebuild")} mode");
+                    Console.WriteLine("Both -gdi and -cue arguments were specified as input. It does not make sense to provide both.");
+                    return false;
+                }
+                if (!string.IsNullOrEmpty(cuePath) && rebuild)
+                {
+                    Console.WriteLine("Rebuilding an image from a CUE sheet is not supported.");
+                    return false;
+                }
+                if (!string.IsNullOrEmpty(cuePath) && (!File.Exists(cuePath) || !Path.GetExtension(cuePath).ToLower().Equals(".cue")))
+                {
+                    Console.WriteLine($"A .cue file is required in {(extracting ? "extract cue" : "rebuild cue")} mode");
+                    return false;
+                }
+                else if (!string.IsNullOrEmpty(gdiPath) && (!File.Exists(gdiPath) || !Path.GetExtension(gdiPath).ToLower().Equals(".gdi")))
+                {
+                    Console.WriteLine($"A .gdi file is required in {(extracting ? "extract gdi" : "rebuild gdi")} mode");
                     return false;
                 }
             }
@@ -465,6 +494,7 @@ namespace buildgdi
             Console.WriteLine("-gdi <file> (Optional) = Path of the disc.gdi file for this disc");
             Console.WriteLine("   Existing GDI files will be updated with the new tracks.");
             Console.WriteLine("   If no GDI exists, only lines for tracks 3 and above will be written.");
+            Console.WriteLine("-cue <file> (Extraction only) = Path of a .cue sheet for a NAOMI GD.");
             Console.WriteLine("-V <volume identifier> (Optional) = The volume name (Default is DREAMCAST)");
             Console.WriteLine("-iso (Optional) = Output 2048 byte disc sectors found in ISO9660 instead of 2352");
             Console.WriteLine("-truncate (Optional) = Do not pad generated data to the correct size");
@@ -475,7 +505,7 @@ namespace buildgdi
             Console.WriteLine("   disc if they are new, or replace existing files in the same location.");
             Console.WriteLine("   This requires -output to be a folder. -ip is optional to replace the existing IP.BIN.");
             Console.WriteLine("-extract (Optional) =  Extracts a GDI file to a folder");
-            Console.WriteLine("   Extraction requires the -gdi and -output arguments. -ip is optional to extract IP.BIN.");
+            Console.WriteLine("   Extraction requires the -gdi or -cue argument and -output. -ip is optional to extract IP.BIN.");
         }
     }
 }
