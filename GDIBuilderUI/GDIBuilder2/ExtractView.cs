@@ -62,7 +62,8 @@ namespace GDIBuilder2
             gdiRow.Add(btnPickGdi);
             gdiRow.EndHorizontal();
             gdiRow.Spacing = new Size(5, 5);
-            
+
+            tgvDisc.RowHeight = 24;
             tgvDisc.AllowMultipleSelection = true;
             tgvDisc.Columns.Add(new GridColumn()
                 {
