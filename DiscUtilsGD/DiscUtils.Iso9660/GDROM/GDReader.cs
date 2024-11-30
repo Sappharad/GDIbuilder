@@ -218,6 +218,7 @@ namespace DiscUtils.Gdrom
         /// This would be read back as the year 2109. Since the disc mastering date is stored as a full year, 
         /// we can check this date to see if there's a problem. If the disc was written over 50 years before a file on it,
         /// assume the year is stored incorrectly and treat it as if it were the 2nd byte of the full year.
+        /// Additionally, for some discs the year is actually the number of years since 2000, so we need to handle that too.
         /// </summary>
         /// <param name="input">A file timestamp from the disc</param>
         /// <returns>The original date if it is correct, or a fixed date if it is far newer than the disc itself.</returns>
@@ -226,11 +227,15 @@ namespace DiscUtils.Gdrom
             if (_discCreationYear == null && _checkedYear == false)
             {
                 _checkedYear = true; //Fetching root date would call this recursively otherwise.
-                _discCreationYear = Root.CreationTimeUtc.Year;
+                _discCreationYear = CreationDateAndTime.Year;
             }
             if (input.Year > _discCreationYear + 50)
             {
                 return new DateTime(0x700 + ((input.Year - 1900) & 0xFF), input.Month, input.Day, input.Hour, input.Minute, input.Second, input.Millisecond, input.Kind);
+            }
+            if (input.Year < 1950)
+            {
+                return new DateTime(2000 + ((input.Year - 1900) & 0xFF), input.Month, input.Day, input.Hour, input.Minute, input.Second, input.Millisecond, input.Kind);
             }
             return input;
         }

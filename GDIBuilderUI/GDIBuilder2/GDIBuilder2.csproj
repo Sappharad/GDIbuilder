@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Eto.Forms" Version="2.8.3"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\DiscUtilsGD\DiscUtilsGD.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="file.png" />
+      <EmbeddedResource Include="file.png" />
+      <None Remove="folder.png" />
+      <EmbeddedResource Include="folder.png" />
+    </ItemGroup>
+
+</Project>

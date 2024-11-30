@@ -20,6 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 //
 
+using System;
 using System.IO;
 using DiscUtils.Streams;
 using DiscUtils.Vfs;
@@ -214,5 +215,7 @@ namespace DiscUtils.Iso9660
         {
             return GetRealFileSystem<VfsCDReader>().ReadIPBin();
         }
+
+        public DateTime CreationDateAndTime => GetRealFileSystem<VfsCDReader>().CreationDateAndTime;
     }
 }
