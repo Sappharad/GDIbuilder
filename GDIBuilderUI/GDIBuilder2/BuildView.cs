@@ -76,6 +76,7 @@ namespace GDIBuilder2
                 Spacing = 5
             };
             btnCancel.Enabled = false;
+            chkRawMode.Checked = true;
             btnPickDataFolder.Click += btnSelectData_Click;
             btnPickIpBin.Click += btnSelectIP_Click;
             btnAddCdda.Click += btnSelCdda_Click;
@@ -246,7 +247,9 @@ namespace GDIBuilder2
                     ReportProgress = UpdateProgress
                 };
                 _cancelTokenSource = new CancellationTokenSource();
-                _worker = new Thread(() => DoDiscBuild(txtDataFolder.Text, txtOutdir.Text));
+                string dataFolder = txtDataFolder.Text;
+                string outDir = txtOutdir.Text;
+                _worker = new Thread(() => DoDiscBuild(dataFolder, outDir));
                 _worker.Start();
             }
             else

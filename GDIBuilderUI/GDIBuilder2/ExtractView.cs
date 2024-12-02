@@ -88,6 +88,7 @@ namespace GDIBuilder2
             tgvDisc.Columns.Add(new GridColumn()
             {
                 HeaderText = "Size",
+                MinWidth = 75,
                 DataCell = new TextBoxCell(2)
                 {
                     Binding = Binding.Property((AdaptedPath p) => p.SizeName)
@@ -97,6 +98,7 @@ namespace GDIBuilder2
             tgvDisc.Columns.Add(new GridColumn()
             {
                 HeaderText = "Modified",
+                MinWidth = 140,
                 DataCell = new TextBoxCell(3)
                 {
                     Binding = Binding.Property((AdaptedPath p) => p.Modified.ToString())

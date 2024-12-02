@@ -51,9 +51,10 @@ namespace GDIBuilder2
         private void InitializeComponent()
         {
             Title = "Rebuild Patched GD-ROM";
-            MinimumSize = new Size(540, 220);
+            MinimumSize = new Size(540, 254);
             Padding = new Padding(4, 3, 4, 3);
             btnCancel.Enabled = false;
+            chkRawMode.Checked = true;
             btnPickDataFolder.Click += btnSelectData_Click;
             btnPickGdi.Click += btnPickGdi_Click;
             btnSelOutput.Click += btnSelOutput_Click;
@@ -71,7 +72,7 @@ namespace GDIBuilder2
             gdiRight.Add(btnPickGdi);
             gdiRight.EndHorizontal();
             gdiRight.Spacing = new Size(5, 5);
-            topTable.Add(gdiRight, 1, 1);
+            topTable.Add(gdiRight, 1, 0);
             topTable.Add(new Label { Text = "Modified files:", TextAlignment = TextAlignment.Right }, 0, 1);
             DynamicLayout dataRight = new DynamicLayout();
             dataRight.BeginHorizontal();
@@ -79,7 +80,7 @@ namespace GDIBuilder2
             dataRight.Add(btnPickDataFolder);
             dataRight.EndHorizontal();
             dataRight.Spacing = new Size(5, 5);
-            topTable.Add(dataRight, 1, 0);
+            topTable.Add(dataRight, 1, 1);
             topTable.Add(null, 0, 2);
             topTable.SetRowScale(2, true);
             topTable.Add(new Label { Text = "Output dir:", TextAlignment = TextAlignment.Right }, 0, 3);
@@ -170,7 +171,7 @@ namespace GDIBuilder2
                 }
                 
                 List<string> cdTracks = new List<string>();
-                string[] gdiLines = File.ReadAllText(btnPickGdi.Text).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] gdiLines = File.ReadAllText(txtGdiPath.Text).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 if (gdiLines.Length > 3 && int.TryParse(gdiLines[0], out int numTracks) && numTracks > 3)
                 {
                     for (int i = 4; i < numTracks && i < gdiLines.Length; i++)
@@ -208,7 +209,9 @@ namespace GDIBuilder2
                     ReportProgress = UpdateProgress
                 };
                 _cancelTokenSource = new CancellationTokenSource();
-                _worker = new Thread(() => DoDiscBuild(gdiLines, gdiDirectory, cdTracks, txtDataFolder.Text, txtOutdir.Text));
+                string dataFolder = txtDataFolder.Text;
+                string outDir = txtOutdir.Text;
+                _worker = new Thread(() => DoDiscBuild(gdiLines, gdiDirectory, cdTracks, dataFolder, outDir));
                 _worker.Start();
             }
             else

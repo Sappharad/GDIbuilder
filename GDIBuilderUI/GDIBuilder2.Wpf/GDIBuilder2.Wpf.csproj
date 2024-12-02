@@ -5,6 +5,9 @@
         <TargetFramework>net8.0-windows</TargetFramework>
         <ApplicationIcon>BlankMedia.ico</ApplicationIcon>
         <StartupObject>GDIBuilder2.Wpf.Program</StartupObject>
+        <UseWPF>True</UseWPF>
+        <AssemblyVersion>2.0.0.0</AssemblyVersion>
+        <FileVersion>2.0.0.0</FileVersion>
     </PropertyGroup>
 
     <ItemGroup>
