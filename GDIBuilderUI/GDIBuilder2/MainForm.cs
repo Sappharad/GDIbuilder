@@ -48,7 +48,7 @@ namespace GDIBuilder2
                 Text = "Build new data tracks(s) for the high density area of a GD-ROM image. " +
                        "This takes a folder full of files and an IP.BIN bootstrap, along with optional CDDA and generates a new track03.bin along " +
                        "with a final track for discs with CDDA. This app does not generate track01 or track02, those are standard PC readable tracks " +
-                       "that you can generate with a normal ISO tools like mkisofs or just copy them from an existing image.",
+                       "that you can generate with normal ISO tools like mkisofs or just copy them from an existing image.",
                 ReadOnly = true
             }, 0, 1);
             options.Add(new TextArea
