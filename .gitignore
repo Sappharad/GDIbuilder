@@ -181,8 +181,7 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
-/GDIbuilder/DiscUtils/DiscUtils.dll.xml
 
 *.userprefs
-GDIbuilder/.vs
-MacUI/.idea
+.vs
+.idea

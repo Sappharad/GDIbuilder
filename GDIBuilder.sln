@@ -1,0 +1,48 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDIBuilder2", "GDIBuilderUI\GDIBuilder2\GDIBuilder2.csproj", "{4BE355E6-A5A5-4B13-858F-184FEF8D7B6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDIBuilder2.Gtk", "GDIBuilderUI\GDIBuilder2.Gtk\GDIBuilder2.Gtk.csproj", "{A99B9C43-7281-4F8A-97CB-82AB4F77EFDF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDIBuilder2.Mac", "GDIBuilderUI\GDIBuilder2.Mac\GDIBuilder2.Mac.csproj", "{6B7DF59E-3F3A-48B5-96F1-1D93A1CB61D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDIBuilder2.Wpf", "GDIBuilderUI\GDIBuilder2.Wpf\GDIBuilder2.Wpf.csproj", "{C6ED2555-AECB-4E07-8C7E-F5E092A7CCD6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscUtilsGD", "DiscUtilsGD\DiscUtilsGD.csproj", "{3A6EABEF-7452-4DAD-A973-1616B58D631A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "buildgdi", "buildgdi\buildgdi.csproj", "{42534743-4E28-4551-A5A1-C5E6B12E3E20}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4BE355E6-A5A5-4B13-858F-184FEF8D7B6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BE355E6-A5A5-4B13-858F-184FEF8D7B6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BE355E6-A5A5-4B13-858F-184FEF8D7B6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BE355E6-A5A5-4B13-858F-184FEF8D7B6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A99B9C43-7281-4F8A-97CB-82AB4F77EFDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A99B9C43-7281-4F8A-97CB-82AB4F77EFDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A99B9C43-7281-4F8A-97CB-82AB4F77EFDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A99B9C43-7281-4F8A-97CB-82AB4F77EFDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B7DF59E-3F3A-48B5-96F1-1D93A1CB61D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B7DF59E-3F3A-48B5-96F1-1D93A1CB61D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B7DF59E-3F3A-48B5-96F1-1D93A1CB61D2}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{6B7DF59E-3F3A-48B5-96F1-1D93A1CB61D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B7DF59E-3F3A-48B5-96F1-1D93A1CB61D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B7DF59E-3F3A-48B5-96F1-1D93A1CB61D2}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{C6ED2555-AECB-4E07-8C7E-F5E092A7CCD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6ED2555-AECB-4E07-8C7E-F5E092A7CCD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6ED2555-AECB-4E07-8C7E-F5E092A7CCD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6ED2555-AECB-4E07-8C7E-F5E092A7CCD6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A6EABEF-7452-4DAD-A973-1616B58D631A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A6EABEF-7452-4DAD-A973-1616B58D631A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A6EABEF-7452-4DAD-A973-1616B58D631A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A6EABEF-7452-4DAD-A973-1616B58D631A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42534743-4E28-4551-A5A1-C5E6B12E3E20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42534743-4E28-4551-A5A1-C5E6B12E3E20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42534743-4E28-4551-A5A1-C5E6B12E3E20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42534743-4E28-4551-A5A1-C5E6B12E3E20}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

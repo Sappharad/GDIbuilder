@@ -430,6 +430,8 @@ namespace DiscUtils.Iso9660
             return new MemoryStream(ipbinData);
         }
 
+        public DateTime CreationDateAndTime => Context.VolumeDescriptor.CreationDateAndTime;
+
         protected override File ConvertDirEntryToFile(ReaderDirEntry dirEntry)
         {
             if (dirEntry.IsDirectory)
