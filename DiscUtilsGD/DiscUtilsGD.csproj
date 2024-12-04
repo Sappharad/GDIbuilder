@@ -14,7 +14,7 @@ See the Github repository which has a buildgdi command line tool project as exam
         <Title>DiscUtils GD-ROM Fork</Title>
         <PackageProjectUrl>https://github.com/Sappharad/GDIbuilder</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Sappharad/GDIbuilder</RepositoryUrl>
-        <Copyright>2008-2022 various contributors</Copyright>
+        <Copyright>2008-2024 various contributors</Copyright>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     </PropertyGroup>
