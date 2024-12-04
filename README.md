@@ -37,3 +37,11 @@ The fork of .NET DiscUtils is available as a Nuget package for other developers 
 from other applications without needing to use the buildgdi command line tool. For example usage of
 the library via the Nuget package, see the Program.cs in the buildgdi folder. This command line tool
 performs all of the basic operations of the library.
+
+# Acknowledgements
+
+Thanks to the following people for providing feedback:
+- PkR
+- derek
+- MetalliC
+- VincentNL
