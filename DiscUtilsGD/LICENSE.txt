@@ -42,3 +42,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
+
+
+--
+
+Some other files: (see Git history)
+
+Copyright (c) 2014-2024, Paul Kratt and other contributors
+The license hasn't changed, and it's already above here twice.
+It's the standard MIT license.

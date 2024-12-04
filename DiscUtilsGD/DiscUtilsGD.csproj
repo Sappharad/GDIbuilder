@@ -1,16 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Description>Implementation of the ISO, UDF, FAT and NTFS file systems is now fairly stable. VHD, XVA, VMDK and VDI disk formats are implemented, as well as read/write Registry support. The library also includes a simple iSCSI initiator, for accessing disks via iSCSI and an NFS client implementation.</Description>
+        <Description>This is a fork of the ISO9660 portion of .NET DiscUtils with modifications for the reading and writing of GD-ROM images (.gdi).
+It changes the structure of a generated ISO compared to upstream and adds some GD specific wrapper classes and methods to handle these discs.
+
+See the Github repository which has a buildgdi command line tool project as examples on how to read and write these discs.</Description>
         <AssemblyTitle>DiscUtils (for .NET and .NET Core), forked with modifications to support reading and writing GD-ROM data.</AssemblyTitle>
         <Authors>Kenneth Bell;Quamotion;LordMike;Sappharad</Authors>
-        <PackageTags>DiscUtils;VHD;VDI;XVA;VMDK;ISO;NTFS;EXT2FS;GDI</PackageTags>
+        <PackageTags>DiscUtils;ISO;GDI;GDROM</PackageTags>
         <TargetFramework>netstandard2.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Version>2.0.0</Version>
         <Title>DiscUtils GD-ROM Fork</Title>
         <PackageProjectUrl>https://github.com/Sappharad/GDIbuilder</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Sappharad/GDIbuilder</RepositoryUrl>
+        <Copyright>2008-2022 various contributors</Copyright>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     </PropertyGroup>
     
     <ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
@@ -31,5 +37,17 @@
     <ItemGroup>
       <None Remove="DiscUtils.Iso9660\Properties\**" />
       <None Remove="DiscUtils.Streams\Properties\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="..\README.md">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
+    </ItemGroup>
+    <ItemGroup>
+      <None Update="LICENSE.txt">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
     </ItemGroup>
 </Project>

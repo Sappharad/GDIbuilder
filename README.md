@@ -34,4 +34,6 @@ ISO9660 code was forked from .NET DiscUtils, with a number of modifications made
 - Added a GDReader class which extends CDReader and allows the high density area of GDI's to be read.
 
 The fork of .NET DiscUtils is available as a Nuget package for other developers to read and write .gdi
-from other applications without needing to use the buildgdi command line tool.
+from other applications without needing to use the buildgdi command line tool. For example usage of
+the library via the Nuget package, see the Program.cs in the buildgdi folder. This command line tool
+performs all of the basic operations of the library.
