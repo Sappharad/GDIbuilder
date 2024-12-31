@@ -10,13 +10,14 @@ See the Github repository which has a buildgdi command line tool project as exam
         <PackageTags>DiscUtils;ISO;GDI;GDROM</PackageTags>
         <TargetFramework>netstandard2.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>2.0.0</Version>
+        <Version>2.1.0</Version>
         <Title>DiscUtils GD-ROM Fork</Title>
         <PackageProjectUrl>https://github.com/Sappharad/GDIbuilder</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Sappharad/GDIbuilder</RepositoryUrl>
         <Copyright>2008-2024 various contributors</Copyright>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+        <PackageReleaseNotes>Version 2.1 fixes a critical bug that caused discs with more than 492MB of data in the high density area to be unbootable.</PackageReleaseNotes>
     </PropertyGroup>
     
     <ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
