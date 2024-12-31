@@ -474,6 +474,8 @@ namespace DiscUtils.Iso9660
             //I actually want the path and directory tables before the files, 
             //so lets find out how big it is then move all of the files
             long unfocused = focus;
+            focus = FirstDataExtent;
+
             // Find start of the second set of directory data, fixing ASCII directories in place.
             long startOfFirstDirData = focus;
             foreach (BuildDirectoryInfo di in _dirs)
