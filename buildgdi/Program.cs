@@ -480,7 +480,7 @@ namespace buildgdi
 
         private static void PrintUsage()
         {
-            Console.WriteLine("BuildGDI v2.1 - Command line GDIBuilder");
+            Console.WriteLine("BuildGDI v2.1.1 - Command line GDIBuilder");
             Console.WriteLine("Usage: buildgdi -data dataFolder -ip IP.BIN -cdda track04.raw track05.raw -output folder -gdi disc.gdi");
             Console.WriteLine();
             Console.WriteLine("Arguments:");
