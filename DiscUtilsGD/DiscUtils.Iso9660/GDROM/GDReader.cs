@@ -176,15 +176,28 @@ namespace DiscUtils.Gdrom
                         {
                             currentFile = Path.Combine(sourceDirectory, entry[1]);
                         }
-                        else if (entry[0].Equals("TRACK", StringComparison.Ordinal) && entry[2].IndexOf('/') > 0)
+                        else if (entry[0].Equals("TRACK", StringComparison.Ordinal) && currentFile != null)
                         {
-                            string sectorSizeText = entry[2].Substring(entry[2].IndexOf('/') + 1);
-                            if (uint.TryParse(sectorSizeText, out uint sectorSize))
+                            if (entry[2].IndexOf('/') > 0)
                             {
-                                var stream = new FileStream(currentFile, FileMode.Open, FileAccess.Read);
-                                tracks.Add(new GDDataTrack(stream, currentLba, sectorSize));
-                                currentLba += (uint)(stream.Length / sectorSize);
+                                //Data track
+                                string sectorSizeText = entry[2].Substring(entry[2].IndexOf('/') + 1);
+                                if (uint.TryParse(sectorSizeText, out uint sectorSize))
+                                {
+                                    var stream = new FileStream(currentFile, FileMode.Open, FileAccess.Read);
+                                    tracks.Add(new GDDataTrack(stream, currentLba, sectorSize));
+                                    currentLba += (uint)(stream.Length / sectorSize);
+                                }
                             }
+                            else if (entry[2].Equals("AUDIO", StringComparison.Ordinal))
+                            {
+                                //Audio track
+                                FileInfo fileInfo = new FileInfo(currentFile);
+                                if (fileInfo.Exists)
+                                {
+                                    currentLba += (uint)(fileInfo.Length / 2352);
+                                }
+                            } 
                         }
                     }
                 }

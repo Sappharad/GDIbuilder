@@ -196,7 +196,13 @@ namespace GDIBuilder2
         public ExtractionEntry(string path)
         {
             Path = path;
+            //If we're calling the single parameter constructor, then they selected a file by itself.
+            //Extract those to the root of the destination; if you picked 1 file you don't want the whole disc structure.
             ExtractAs = path;
+            if (path.LastIndexOf('\\') > 0)
+            {
+                ExtractAs = path.Substring(path.LastIndexOf('\\') + 1);
+            }
         }
         public ExtractionEntry(string path, string extractAs)
         {

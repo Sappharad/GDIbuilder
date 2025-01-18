@@ -313,6 +313,7 @@ namespace GDIBuilder2
                             break;
                         }
 
+                        if (parent.LastIndexOf('\\') <= 0) break;
                         parent = parent.Substring(0, file.LastIndexOf('\\'));
                     } while (parent.Length > 1);
                 }
