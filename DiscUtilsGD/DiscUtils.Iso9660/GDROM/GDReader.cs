@@ -182,10 +182,11 @@ namespace DiscUtils.Gdrom
                             {
                                 //Data track
                                 string sectorSizeText = entry[2].Substring(entry[2].IndexOf('/') + 1);
+                                bool mode2 = entry[2].Contains("MODE2");
                                 if (uint.TryParse(sectorSizeText, out uint sectorSize))
                                 {
                                     var stream = new FileStream(currentFile, FileMode.Open, FileAccess.Read);
-                                    tracks.Add(new GDDataTrack(stream, currentLba, sectorSize));
+                                    tracks.Add(new GDDataTrack(stream, currentLba, sectorSize, (uint)(mode2 ? 0x18 : 0x10)));
                                     currentLba += (uint)(stream.Length / sectorSize);
                                 }
                             }

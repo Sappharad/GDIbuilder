@@ -212,7 +212,10 @@ namespace GDIBuilder2
                 AddFolder(dirPath, folder);
                 discRoot.Add(folder);
             }
-            foreach (var filePath in _currentDisc.GetFiles(""))
+
+            var files = _currentDisc.GetFiles("");
+            var uniqueFiles = new HashSet<string>(files);
+            foreach (var filePath in uniqueFiles)
             {
                 AdaptedPath file = new AdaptedPath
                 {
@@ -245,7 +248,9 @@ namespace GDIBuilder2
                 AddFolder(dirPath, folder);
                 parent.Children.Add(folder);
             }
-            foreach (var filePath in _currentDisc.GetFiles(folderPath))
+            var files = _currentDisc.GetFiles(folderPath);
+            var uniqueFiles = new HashSet<string>(files);
+            foreach (var filePath in uniqueFiles)
             {
                 AdaptedPath file = new AdaptedPath
                 {
@@ -314,7 +319,7 @@ namespace GDIBuilder2
                         }
 
                         if (parent.LastIndexOf('\\') <= 0) break;
-                        parent = parent.Substring(0, file.LastIndexOf('\\'));
+                        parent = parent.Substring(0, parent.LastIndexOf('\\'));
                     } while (parent.Length > 1);
                 }
             }

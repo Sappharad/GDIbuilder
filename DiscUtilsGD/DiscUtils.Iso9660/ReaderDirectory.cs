@@ -106,6 +106,7 @@ namespace DiscUtils.Iso9660
 
             foreach (ReaderDirEntry r in _records)
             {
+                if(r.Record.Flags == FileFlags.AssociatedFile) continue;
                 string toComp = IsoUtilities.NormalizeFileName(r.FileName).ToUpper(CultureInfo.InvariantCulture);
                 if (!anyVerMatch && toComp == normName)
                 {
